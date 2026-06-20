@@ -184,7 +184,7 @@ export function CaseForm({
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(CASE_STATUS_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
+                  <SelectItem key={value} value={label}>
                     {label}
                   </SelectItem>
                 ))}
@@ -313,7 +313,7 @@ export function CaseForm({
               </SelectTrigger>
               <SelectContent>
                 {profilesByRole(profiles, "coordinator").map((profile) => (
-                  <SelectItem key={profile.id} value={profile.id}>
+                  <SelectItem key={profile.id} value={profile.full_name}>
                     {profile.full_name}
                   </SelectItem>
                 ))}
