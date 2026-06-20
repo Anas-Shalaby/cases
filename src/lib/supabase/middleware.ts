@@ -1,13 +1,32 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function redirectToLogin(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  return NextResponse.redirect(url);
+}
+
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const isLoginRoute = pathname.startsWith("/login");
+  const isOnboardingRoute = pathname.startsWith("/onboarding");
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // بدون env vars: اسمح بـ /login فقط، وباقي المسارات → login
+  if (!supabaseUrl || !supabaseAnonKey) {
+    if (isLoginRoute) {
+      return NextResponse.next();
+    }
+    return redirectToLogin(request);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -22,25 +41,30 @@ export async function updateSession(request: NextRequest) {
           );
         },
       },
+    });
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError) {
+      if (isLoginRoute) {
+        return NextResponse.next();
+      }
+      return redirectToLogin(request);
     }
-  );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    if (!user) {
+      if (isLoginRoute || isOnboardingRoute) {
+        if (isOnboardingRoute) {
+          return redirectToLogin(request);
+        }
+        return NextResponse.next();
+      }
+      return redirectToLogin(request);
+    }
 
-  const pathname = request.nextUrl.pathname;
-  const isLoginRoute = pathname.startsWith("/login");
-  const isOnboardingRoute = pathname.startsWith("/onboarding");
-  const isPublicRoute = isLoginRoute;
-
-  if (!user && !isPublicRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  if (user) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("onboarding_completed")
@@ -66,7 +90,12 @@ export async function updateSession(request: NextRequest) {
       url.pathname = "/";
       return NextResponse.redirect(url);
     }
-  }
 
-  return supabaseResponse;
+    return supabaseResponse;
+  } catch {
+    if (isLoginRoute) {
+      return NextResponse.next();
+    }
+    return redirectToLogin(request);
+  }
 }
