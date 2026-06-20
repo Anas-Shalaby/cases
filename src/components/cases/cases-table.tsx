@@ -1,0 +1,109 @@
+import Link from "next/link";
+import { Eye, Pencil } from "lucide-react";
+
+import { StatusBadge } from "@/components/cases/status-badge";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn, formatDate } from "@/lib/utils";
+import type { CaseWithRelations } from "@/types/database";
+
+interface CasesTableProps {
+  cases: CaseWithRelations[];
+  className?: string;
+}
+
+export function CasesTable({ cases, className }: CasesTableProps) {
+  if (cases.length === 0) {
+    return (
+      <div
+        className={cn(
+          "text-muted-foreground rounded-lg border border-dashed py-10 text-center text-sm",
+          className
+        )}
+      >
+        لا توجد قضايا لعرضها
+      </div>
+    );
+  }
+
+  return (
+    <Table className={className}>
+      <TableHeader>
+        <TableRow className="hover:bg-transparent">
+          <TableHead>رقم القضية</TableHead>
+          <TableHead>اسم القضية</TableHead>
+          <TableHead>المدعي</TableHead>
+          <TableHead>المدعى عليه</TableHead>
+          <TableHead>الحالة</TableHead>
+          <TableHead>التكليف</TableHead>
+          <TableHead className="w-20">إجراء</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {cases.map((caseItem) => (
+          <TableRow key={caseItem.id}>
+            <TableCell>
+              <Link
+                href={`/cases/${caseItem.id}`}
+                className="font-mono text-xs font-semibold text-primary hover:underline"
+                dir="ltr"
+              >
+                {caseItem.case_number}
+              </Link>
+            </TableCell>
+            <TableCell className="max-w-[200px] truncate font-medium">
+              <Link
+                href={`/cases/${caseItem.id}`}
+                className="hover:text-primary hover:underline"
+              >
+                {caseItem.case_name}
+              </Link>
+            </TableCell>
+            <TableCell className="font-medium">
+              <Link
+                href={`/cases/${caseItem.id}`}
+                className="hover:text-primary hover:underline"
+              >
+                {caseItem.plaintiff_name}
+              </Link>
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              {caseItem.defendant_name}
+            </TableCell>
+            <TableCell>
+              <StatusBadge status={caseItem.status} />
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              {formatDate(caseItem.assignment_date)}
+            </TableCell>
+            <TableCell>
+              <div className="flex items-center gap-0.5">
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  render={<Link href={`/cases/${caseItem.id}`} />}
+                >
+                  <Eye className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  render={<Link href={`/cases/${caseItem.id}/edit`} />}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}

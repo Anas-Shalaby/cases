@@ -1,0 +1,9 @@
+-- مراحل إنجاز القضية (تواريخ تُسجّل عند وضع علامة الإتمام)
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS case_received_at DATE;
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS parties_invited_at DATE;
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS experts_meeting_at DATE;
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS defendant_documents_received_at DATE;
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS plaintiff_documents_received_at DATE;
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS initial_report_prepared_at DATE;
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS final_report_prepared_at DATE;
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS case_closed_at DATE;
