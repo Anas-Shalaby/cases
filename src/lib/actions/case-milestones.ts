@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireCoordinator } from "@/lib/auth/require-coordinator";
 import {
   CASE_MILESTONE_KEYS,
   type CaseMilestoneKey,
@@ -17,6 +18,9 @@ export async function toggleCaseMilestone(
   field: CaseMilestoneKey,
   completed: boolean
 ) {
+  const auth = await requireCoordinator();
+  if ("error" in auth) return { error: auth.error._form[0] };
+
   if (!CASE_MILESTONE_KEYS.includes(field)) {
     return { error: "مرحلة غير صالحة" };
   }

@@ -33,7 +33,7 @@ export function DeleteCaseButton({ caseId }: DeleteCaseButtonProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="destructive">
+          <Button variant="destructive" className="flex-1 sm:flex-none">
             <Trash2 className="size-4" />
             حذف
           </Button>

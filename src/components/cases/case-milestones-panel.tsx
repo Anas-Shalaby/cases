@@ -90,7 +90,7 @@ export function CaseMilestonesPanel({
               <li
                 key={key}
                 className={cn(
-                  "flex items-center gap-4 px-4 py-3 transition-colors",
+                  "flex items-start gap-3 px-4 py-3 transition-colors sm:items-center sm:gap-4",
                   isDone && "bg-emerald-50/50 dark:bg-emerald-950/20",
                   isLoading && "opacity-60"
                 )}
@@ -112,10 +112,10 @@ export function CaseMilestonesPanel({
                   />
                 )}
 
-                <div className="flex flex-1 items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                   <span
                     className={cn(
-                      "text-sm font-medium",
+                      "text-sm font-medium leading-snug",
                       isDone && "text-emerald-800 dark:text-emerald-300"
                     )}
                   >
@@ -127,7 +127,9 @@ export function CaseMilestonesPanel({
                     </span>
                   )}
                   {!isDone && !readOnly && (
-                    <span className="text-muted-foreground text-xs">لم تُنجَز بعد</span>
+                    <span className="text-muted-foreground text-xs sm:shrink-0">
+                      لم تُنجَز بعد
+                    </span>
                   )}
                 </div>
               </li>

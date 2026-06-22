@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 
+import { CaseDocumentsPanel } from "@/components/cases/case-documents-panel";
 import { CaseMilestonesPanel } from "@/components/cases/case-milestones-panel";
 import { StatusBadge } from "@/components/cases/status-badge";
 import { DeleteCaseButton } from "@/components/cases/delete-case-button";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getCaseById } from "@/lib/actions/cases";
+import { getCaseDocuments } from "@/lib/actions/case-documents";
 import { getCurrentProfile } from "@/lib/actions/profile";
 import { USER_ROLE_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
@@ -26,9 +28,10 @@ interface CaseDetailPageProps {
 
 export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   const { id } = await params;
-  const [caseData, profile] = await Promise.all([
+  const [caseData, profile, documents] = await Promise.all([
     getCaseById(id).catch(() => null),
     getCurrentProfile(),
+    getCaseDocuments(id).catch(() => []),
   ]);
 
   if (!caseData) notFound();
@@ -42,11 +45,17 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           title={caseData.case_name}
           description={`${caseData.case_number} — ${caseData.plaintiff_name} ضد ${caseData.defendant_name} · ${formatDate(caseData.created_at)}`}
         />
-        <div className="flex gap-2">
-          <Button variant="outline" render={<Link href={`/cases/${id}/edit`} />}>
-            <Pencil className="size-4" />
-            تعديل
-          </Button>
+        <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">
+          {isCoordinator && (
+            <Button
+              variant="outline"
+              className="flex-1 sm:flex-none"
+              render={<Link href={`/cases/${id}/edit`} />}
+            >
+              <Pencil className="size-4" />
+              تعديل
+            </Button>
+          )}
           {isCoordinator && <DeleteCaseButton caseId={id} />}
         </div>
       </div>
@@ -64,6 +73,12 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
       </Card>
 
       <CaseMilestonesPanel caseId={id} caseData={caseData} readOnly />
+
+      <CaseDocumentsPanel
+        caseId={id}
+        documents={documents}
+        canManage={isCoordinator}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -142,9 +157,9 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
 
 function DateRow({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="flex justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{formatDate(value)}</span>
+    <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="font-medium sm:text-left">{formatDate(value)}</span>
     </div>
   );
 }
@@ -152,9 +167,11 @@ function DateRow({ label, value }: { label: string; value: string | null }) {
 function TeamRow({ label, name }: { label: string; name?: string | null }) {
   return (
     <>
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">{label}</span>
-        <span className="font-medium">{name ?? "—"}</span>
+      <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
+        <span className="text-muted-foreground shrink-0">{label}</span>
+        <span className="truncate font-medium sm:max-w-[60%] sm:text-left">
+          {name ?? "—"}
+        </span>
       </div>
       <Separator />
     </>
@@ -171,9 +188,12 @@ function InfoRow({
   dir?: "ltr" | "rtl";
 }) {
   return (
-    <div className="flex justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium" dir={dir}>
+    <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span
+        className="break-all font-medium sm:max-w-[65%] sm:text-left"
+        dir={dir}
+      >
         {value ?? "—"}
       </span>
     </div>

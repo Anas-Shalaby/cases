@@ -13,6 +13,12 @@ export const metadata = {
   description: "لوحة تحكم شاملة لإدارة القضايا",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,7 +30,9 @@ export default function RootLayout({
       dir="rtl"
       className={`${notoSansArabic.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col overflow-x-hidden font-sans">
+        {children}
+      </body>
     </html>
   );
 }

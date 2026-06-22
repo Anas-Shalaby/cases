@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireCoordinator } from "@/lib/auth/require-coordinator";
+import { logActivity } from "@/lib/actions/activity-logs";
+import {
+  CASE_STATUS_LABELS,
+} from "@/lib/constants";
 import {
   caseFormSchema,
   emptyDate,
@@ -106,6 +111,9 @@ function toCasePayload(values: CaseFormValues) {
 }
 
 export async function createCase(values: CaseFormValues) {
+  const auth = await requireCoordinator();
+  if ("error" in auth) return { error: auth.error };
+
   const parsed = caseFormSchema.safeParse(values);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
@@ -135,22 +143,44 @@ export async function createCase(values: CaseFormValues) {
     return { error: { _form: [error.message] } };
   }
 
+  const caseId = (data as { id: string }).id;
+  await logActivity({
+    userId: auth.profile.id,
+    actionType: "create_case",
+    caseId,
+    description: `أنشأ قضية جديدة: ${payload.case_number} — ${payload.case_name}`,
+    metadata: {
+      case_number: payload.case_number,
+      case_name: payload.case_name,
+      status: payload.status,
+    },
+  });
+
   revalidatePath("/");
   revalidatePath("/cases");
-  redirect(`/cases/${(data as { id: string }).id}`);
+  revalidatePath("/activity-logs");
+  return { success: true, id: caseId };
 }
 
 export async function updateCase(id: string, values: CaseFormValues) {
+  const auth = await requireCoordinator();
+  if ("error" in auth) return { error: auth.error };
+
   const parsed = caseFormSchema.safeParse(values);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+
+  const { data: existingCase } = await supabase
     .from("cases")
-    .update(toCasePayload(parsed.data))
-    .eq("id", id);
+    .select("case_number, case_name, status")
+    .eq("id", id)
+    .single();
+
+  const payload = toCasePayload(parsed.data);
+  const { error } = await supabase.from("cases").update(payload).eq("id", id);
 
   if (error) {
     if (error.code === "23505") {
@@ -159,19 +189,64 @@ export async function updateCase(id: string, values: CaseFormValues) {
     return { error: { _form: [error.message] } };
   }
 
+  const oldStatus = existingCase?.status as string | undefined;
+  const statusChanged = oldStatus && oldStatus !== payload.status;
+  const description = statusChanged
+    ? `عدّل القضية ${payload.case_number}: غيّر الحالة من «${CASE_STATUS_LABELS[oldStatus as keyof typeof CASE_STATUS_LABELS]}» إلى «${CASE_STATUS_LABELS[payload.status]}»`
+    : `عدّل بيانات القضية ${payload.case_number} — ${payload.case_name}`;
+
+  await logActivity({
+    userId: auth.profile.id,
+    actionType: "update_case",
+    caseId: id,
+    description,
+    metadata: {
+      case_number: payload.case_number,
+      case_name: payload.case_name,
+      ...(statusChanged
+        ? { old_status: oldStatus, new_status: payload.status }
+        : {}),
+    },
+  });
+
   revalidatePath("/");
   revalidatePath("/cases");
   revalidatePath(`/cases/${id}`);
-  redirect(`/cases/${id}`);
+  revalidatePath("/activity-logs");
+  return { success: true, id };
 }
 
 export async function deleteCase(id: string) {
+  const auth = await requireCoordinator();
+  if ("error" in auth) return { error: auth.error._form[0] };
+
   const supabase = await createClient();
+
+  const { data: existingCase } = await supabase
+    .from("cases")
+    .select("case_number, case_name")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase.from("cases").delete().eq("id", id);
 
   if (error) return { error: error.message };
 
+  if (existingCase) {
+    await logActivity({
+      userId: auth.profile.id,
+      actionType: "delete_case",
+      caseId: null,
+      description: `حذف القضية ${existingCase.case_number} — ${existingCase.case_name}`,
+      metadata: {
+        case_number: existingCase.case_number,
+        case_name: existingCase.case_name,
+      },
+    });
+  }
+
   revalidatePath("/");
   revalidatePath("/cases");
+  revalidatePath("/activity-logs");
   redirect("/cases");
 }

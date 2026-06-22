@@ -2,9 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTransition, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { ProfileSelect } from "@/components/cases/profile-select";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,12 +30,14 @@ import {
   caseFormSchema,
   type CaseFormValues,
 } from "@/lib/validations/case";
-import type { Case, Profile, UserRole } from "@/types/database";
+import type { Case, Profile } from "@/types/database";
 
 interface CaseFormProps {
   profiles: Pick<Profile, "id" | "full_name" | "role">[];
   initialData?: Case;
-  onSubmit: (values: CaseFormValues) => Promise<{ error?: unknown } | void>;
+  onSubmit: (
+    values: CaseFormValues
+  ) => Promise<{ error?: unknown; success?: boolean; id?: string } | void>;
   submitLabel?: string;
 }
 
@@ -77,19 +81,13 @@ function caseToFormValues(caseData: Case): CaseFormValues {
   };
 }
 
-function profilesByRole(
-  profiles: Pick<Profile, "id" | "full_name" | "role">[],
-  role: UserRole
-) {
-  return profiles.filter((p) => p.role === role);
-}
-
 export function CaseForm({
   profiles,
   initialData,
   onSubmit,
   submitLabel = "حفظ القضية",
 }: CaseFormProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -115,13 +113,29 @@ export function CaseForm({
     setFormError(null);
     startTransition(async () => {
       const result = await onSubmit(values);
+
+      if (result && "success" in result && result.success) {
+        if ("id" in result && typeof result.id === "string") {
+          router.push(`/cases/${result.id}`);
+        }
+        return;
+      }
+
       if (result?.error) {
         const err = result.error as Record<string, string[] | undefined>;
-        if (err._form?.[0]) {
-          setFormError(err._form[0]);
-        }
-        if (err.case_number?.[0]) {
-          setFormError(err.case_number[0]);
+        const firstError =
+          err._form?.[0] ??
+          err.case_number?.[0] ??
+          err.case_name?.[0] ??
+          err.coordinator_id?.[0] ??
+          err.expert_id?.[0] ??
+          err.assistant_id?.[0] ??
+          Object.values(err)
+            .flat()
+            .find((msg): msg is string => Boolean(msg));
+
+        if (firstError) {
+          setFormError(firstError);
         }
       }
     });
@@ -180,11 +194,13 @@ export function CaseForm({
               }
             >
               <SelectTrigger id="status" className="w-full">
-                <SelectValue placeholder="اختر الحالة" />
+                <SelectValue placeholder="اختر الحالة">
+                  {CASE_STATUS_LABELS[status]}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(CASE_STATUS_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={label}>
+                  <SelectItem key={value} value={value}>
                     {label}
                   </SelectItem>
                 ))}
@@ -299,70 +315,62 @@ export function CaseForm({
           <CardTitle>فريق العمل</CardTitle>
           <CardDescription>تعيين المنسق والخبير والمساعد</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
             <Label>المنسق ({USER_ROLE_LABELS.coordinator})</Label>
-            <Select
-              value={coordinatorId || ""}
-              onValueChange={(value) =>
-                setValue("coordinator_id", value ?? "")
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="اختر المنسق" />
-              </SelectTrigger>
-              <SelectContent>
-                {profilesByRole(profiles, "coordinator").map((profile) => (
-                  <SelectItem key={profile.id} value={profile.full_name}>
-                    {profile.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ProfileSelect
+              profiles={profiles}
+              role="coordinator"
+              value={coordinatorId ?? ""}
+              onValueChange={(value) => setValue("coordinator_id", value)}
+              placeholder="اختر المنسق"
+              disabled={isPending}
+            />
+            {errors.coordinator_id && (
+              <p className="text-sm text-destructive">
+                {errors.coordinator_id.message}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label>الخبير ({USER_ROLE_LABELS.expert})</Label>
-            <Select
-              value={expertId || ""}
-              onValueChange={(value) => setValue("expert_id", value ?? "")}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="اختر الخبير" />
-              </SelectTrigger>
-              <SelectContent>
-                {profilesByRole(profiles, "expert").map((profile) => (
-                  <SelectItem key={profile.id} value={profile.id}>
-                    {profile.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ProfileSelect
+              profiles={profiles}
+              role="expert"
+              value={expertId ?? ""}
+              onValueChange={(value) => setValue("expert_id", value)}
+              placeholder="اختر الخبير"
+              disabled={isPending}
+            />
+            {errors.expert_id && (
+              <p className="text-sm text-destructive">
+                {errors.expert_id.message}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label>المساعد ({USER_ROLE_LABELS.assistant})</Label>
-            <Select
-              value={assistantId || ""}
-              onValueChange={(value) => setValue("assistant_id", value ?? "")}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="اختر المساعد" />
-              </SelectTrigger>
-              <SelectContent>
-                {profilesByRole(profiles, "assistant").map((profile) => (
-                  <SelectItem key={profile.id} value={profile.id}>
-                    {profile.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ProfileSelect
+              profiles={profiles}
+              role="assistant"
+              value={assistantId ?? ""}
+              onValueChange={(value) => setValue("assistant_id", value)}
+              placeholder="اختر المساعد"
+              disabled={isPending}
+            />
+            {errors.assistant_id && (
+              <p className="text-sm text-destructive">
+                {errors.assistant_id.message}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
 
       <Separator />
 
-      <div className="flex justify-start gap-3">
-        <Button type="submit" disabled={isPending}>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-start">
+        <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
           {isPending && <Loader2 className="size-4 animate-spin" />}
           {submitLabel}
         </Button>

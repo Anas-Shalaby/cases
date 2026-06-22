@@ -1,5 +1,17 @@
 export type UserRole = "coordinator" | "expert" | "assistant";
 export type CaseStatus = "open" | "delayed" | "closed";
+export type NotificationType =
+  | "report_deadline"
+  | "meeting_reminder"
+  | "new_document"
+  | "case_assigned";
+
+export type LogActionType =
+  | "create_case"
+  | "update_case"
+  | "delete_case"
+  | "create_user"
+  | "upload_document";
 
 export interface Profile {
   id: string;
@@ -42,6 +54,46 @@ export interface CaseWithRelations extends Case {
   coordinator: Pick<Profile, "id" | "full_name"> | null;
   expert: Pick<Profile, "id" | "full_name"> | null;
   assistant: Pick<Profile, "id" | "full_name"> | null;
+}
+
+export interface CaseDocument {
+  id: string;
+  case_id: string;
+  title: string;
+  file_path: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+  uploader?: Pick<Profile, "id" | "full_name"> | null;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  case_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface NotificationWithCase extends Notification {
+  case: Pick<Case, "id" | "case_number" | "case_name"> | null;
+}
+
+export interface ActivityLog {
+  id: string;
+  user_id: string | null;
+  action_type: LogActionType;
+  case_id: string | null;
+  description: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface ActivityLogWithRelations extends ActivityLog {
+  actor: Pick<Profile, "id" | "full_name"> | null;
+  case: Pick<Case, "id" | "case_number" | "case_name"> | null;
 }
 
 export interface Database {
@@ -121,6 +173,56 @@ export interface Database {
         };
         Relationships: [];
       };
+      case_documents: {
+        Row: CaseDocument;
+        Insert: {
+          id?: string;
+          case_id: string;
+          title: string;
+          file_path?: string | null;
+          uploaded_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          title?: string;
+          file_path?: string | null;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: Notification;
+        Insert: {
+          id?: string;
+          user_id: string;
+          case_id: string;
+          type: NotificationType;
+          title: string;
+          message: string;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          is_read?: boolean;
+        };
+        Relationships: [];
+      };
+      activity_logs: {
+        Row: ActivityLog;
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          action_type: LogActionType;
+          case_id?: string | null;
+          description: string;
+          metadata?: Record<string, unknown> | null;
+          created_at?: string;
+        };
+        Update: {
+          description?: string;
+          metadata?: Record<string, unknown> | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -128,10 +230,16 @@ export interface Database {
         Args: Record<string, never>;
         Returns: UserRole;
       };
+      sync_deadline_notifications: {
+        Args: Record<string, never>;
+        Returns: void;
+      };
     };
     Enums: {
       user_role: UserRole;
       case_status: CaseStatus;
+      notification_type: NotificationType;
+      log_action_type: LogActionType;
     };
     CompositeTypes: Record<string, never>;
   };

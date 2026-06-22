@@ -27,6 +27,7 @@ interface CasesDataTableProps {
   cases: CaseWithRelations[];
   className?: string;
   emptyMessage?: string;
+  canEdit?: boolean;
 }
 
 function CellText({
@@ -74,6 +75,7 @@ export function CasesDataTable({
   cases,
   className,
   emptyMessage = "لا توجد قضايا لعرضها",
+  canEdit = false,
 }: CasesDataTableProps) {
   if (cases.length === 0) {
     return (
@@ -196,12 +198,14 @@ export function CasesDataTable({
                     <Eye className="size-4" />
                     عرض التفاصيل
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    render={<Link href={`/cases/${caseItem.id}/edit`} />}
-                  >
-                    <Pencil className="size-4" />
-                    تعديل القضية
-                  </DropdownMenuItem>
+                  {canEdit && (
+                    <DropdownMenuItem
+                      render={<Link href={`/cases/${caseItem.id}/edit`} />}
+                    >
+                      <Pencil className="size-4" />
+                      تعديل القضية
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>

@@ -24,7 +24,8 @@ export function FloatingAddCaseButton({
     <Link
       href="/cases/new"
       className={cn(
-        "fixed bottom-6 left-6 z-50 flex size-14 items-center justify-center rounded-full",
+        "fixed z-50 flex size-14 items-center justify-center rounded-full",
+        "bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-[max(1.5rem,env(safe-area-inset-left))]",
         "bg-primary text-primary-foreground shadow-lg shadow-primary/25",
         "transition-all hover:scale-105 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/30",
         "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/50",

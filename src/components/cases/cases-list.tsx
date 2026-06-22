@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Briefcase, Eye, Pencil, Search } from "lucide-react";
+import { Briefcase, Search } from "lucide-react";
 
+import { CaseMobileCard } from "@/components/cases/case-mobile-card";
 import { CasesDataTable } from "@/components/cases/cases-data-table";
-import { StatusBadge } from "@/components/cases/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { CASE_STATUS_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
-import { cn, formatDate } from "@/lib/utils";
+import { CASE_STATUS_LABELS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { CaseStatus, CaseWithRelations } from "@/types/database";
 
 type StatusFilter = "all" | CaseStatus;
@@ -119,7 +119,7 @@ export function CasesList({ cases, isCoordinator }: CasesListProps) {
       </Card>
 
       {/* جدول shadcn — شاشات كبيرة */}
-      <Card className="hidden w-full overflow-hidden md:block">
+      <Card className="hidden w-full overflow-hidden lg:block">
         <CardHeader className="border-b">
           <CardTitle className="flex items-center justify-between text-base">
             <span>قائمة القضايا</span>
@@ -132,12 +132,13 @@ export function CasesList({ cases, isCoordinator }: CasesListProps) {
           <CasesDataTable
             cases={filteredCases}
             emptyMessage="لا توجد نتائج مطابقة للبحث"
+            canEdit={isCoordinator}
           />
         </CardContent>
       </Card>
 
       {/* بطاقات — موبايل */}
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         {filteredCases.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -148,95 +149,10 @@ export function CasesList({ cases, isCoordinator }: CasesListProps) {
           </Card>
         ) : (
           filteredCases.map((caseItem) => (
-            <CaseMobileCard key={caseItem.id} caseItem={caseItem} />
+            <CaseMobileCard key={caseItem.id} caseItem={caseItem} canEdit={isCoordinator} />
           ))
         )}
       </div>
     </div>
-  );
-}
-
-function CaseMobileCard({ caseItem }: { caseItem: CaseWithRelations }) {
-  return (
-    <Card className="overflow-hidden">
-      <CardContent className="space-y-4 pt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <p
-              className="font-mono text-sm font-bold text-primary"
-              dir="ltr"
-            >
-              {caseItem.case_number}
-            </p>
-            <p className="font-medium leading-snug">{caseItem.case_name}</p>
-            <p className="text-muted-foreground text-xs">
-              {formatDate(caseItem.assignment_date)}
-            </p>
-          </div>
-          <StatusBadge status={caseItem.status} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="text-muted-foreground mb-0.5 text-xs">المدعي</p>
-            <p className="font-medium">{caseItem.plaintiff_name}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-0.5 text-xs">المدعى عليه</p>
-            <p className="font-medium">{caseItem.defendant_name}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-0.5 text-xs">الاجتماع</p>
-            <p>{formatDate(caseItem.meeting_date)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-0.5 text-xs">التقرير النهائي</p>
-            <p>{formatDate(caseItem.final_report_date)}</p>
-          </div>
-        </div>
-
-        <div className="text-muted-foreground grid grid-cols-3 gap-2 border-t pt-3 text-xs">
-          <div>
-            <p className="mb-0.5">{USER_ROLE_LABELS.coordinator}</p>
-            <p className="text-foreground truncate">
-              {caseItem.coordinator?.full_name ?? "—"}
-            </p>
-          </div>
-          <div>
-            <p className="mb-0.5">{USER_ROLE_LABELS.expert}</p>
-            <p className="text-foreground truncate">
-              {caseItem.expert?.full_name ?? "—"}
-            </p>
-          </div>
-          <div>
-            <p className="mb-0.5">{USER_ROLE_LABELS.assistant}</p>
-            <p className="text-foreground truncate">
-              {caseItem.assistant?.full_name ?? "—"}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            render={<Link href={`/cases/${caseItem.id}`} />}
-          >
-            <Eye className="size-4" />
-            عرض
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            render={<Link href={`/cases/${caseItem.id}/edit`} />}
-          >
-            <Pencil className="size-4" />
-            تعديل
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

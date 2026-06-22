@@ -16,14 +16,16 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>
         {description && (
-          <p className="text-muted-foreground mt-1 text-sm">{description}</p>
+          <p className="text-muted-foreground mt-1 line-clamp-2 text-sm sm:line-clamp-none">
+            {description}
+          </p>
         )}
       </div>
       {showNewCase && (
-        <Button render={<Link href="/cases/new" />}>
+        <Button className="w-full shrink-0 sm:w-auto" render={<Link href="/cases/new" />}>
           <Plus className="size-4" />
           قضية جديدة
         </Button>
