@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { CaseForm } from "@/components/cases/case-form";
-import { CaseMilestonesPanel } from "@/components/cases/case-milestones-panel";
+import { CaseEditPanels } from "@/components/cases/case-edit-panels";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { getCaseById, getProfiles, updateCase } from "@/lib/actions/cases";
 import { getCurrentProfile } from "@/lib/actions/profile";
@@ -30,13 +29,12 @@ export default async function EditCasePage({ params }: EditCasePageProps) {
         title="تعديل القضية"
         description={`${caseData.case_number} — ${caseData.case_name}`}
       />
-      <CaseForm
+      <CaseEditPanels
+        caseId={id}
+        caseData={caseData}
         profiles={profiles}
-        initialData={caseData}
         onSubmit={handleUpdate}
-        submitLabel="حفظ التعديلات"
       />
-      <CaseMilestonesPanel caseId={id} caseData={caseData} />
     </div>
   );
 }

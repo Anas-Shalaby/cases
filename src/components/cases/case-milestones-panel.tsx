@@ -18,12 +18,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { Case } from "@/types/database";
+import type { Case, CaseStatus } from "@/types/database";
 
 interface CaseMilestonesPanelProps {
   caseId: string;
   caseData: Case;
   readOnly?: boolean;
+  onStatusChange?: (status: CaseStatus) => void;
+  onCloseMilestoneChange?: (update: {
+    caseClosedAt: string | null;
+    status: CaseStatus;
+  }) => void;
 }
 
 function todayDateString() {
@@ -44,6 +49,8 @@ export function CaseMilestonesPanel({
   caseId,
   caseData,
   readOnly = false,
+  onStatusChange,
+  onCloseMilestoneChange,
 }: CaseMilestonesPanelProps) {
   const [dates, setDates] = useState(() => buildMilestoneState(caseData));
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +86,14 @@ export function CaseMilestonesPanel({
 
       if (result.success) {
         setDates((prev) => ({ ...prev, [key]: result.date }));
+
+        if (key === "case_closed_at" && result.status) {
+          onStatusChange?.(result.status);
+          onCloseMilestoneChange?.({
+            caseClosedAt: result.date,
+            status: result.status,
+          });
+        }
       }
     });
   }
@@ -118,7 +133,7 @@ export function CaseMilestonesPanel({
         <CardDescription>
           {readOnly
             ? `تم إنجاز ${completedCount} من ${CASE_MILESTONES.length} مراحل`
-            : "ضع علامة ✓ عند إتمام كل مرحلة وعدّل التاريخ بجانبها"}
+            : "ضع علامة ✓ عند إتمام كل مرحلة — عند غلق القضية تتغير حالتها إلى «مغلقة» تلقائياً"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-1">

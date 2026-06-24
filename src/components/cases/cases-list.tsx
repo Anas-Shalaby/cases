@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { CASE_STATUS_LABELS } from "@/lib/constants";
+import { isCaseLate, getCasesWithLateDeadlines } from "@/lib/case-deadlines";
 import { cn } from "@/lib/utils";
 import type { CaseStatus, CaseWithRelations } from "@/types/database";
 
@@ -24,7 +25,7 @@ interface CasesListProps {
 const statusFilters: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "الكل" },
   { value: "open", label: CASE_STATUS_LABELS.open },
-  { value: "delayed", label: CASE_STATUS_LABELS.delayed },
+  { value: "delayed", label: "مواعيد متأخرة" },
   { value: "closed", label: CASE_STATUS_LABELS.closed },
 ];
 
@@ -36,7 +37,10 @@ export function CasesList({ cases, isCoordinator, initialStatusFilter = "all" }:
     const query = search.trim().toLowerCase();
     return cases.filter((caseItem) => {
       const matchesStatus =
-        statusFilter === "all" || caseItem.status === statusFilter;
+        statusFilter === "all" ||
+        (statusFilter === "delayed"
+          ? isCaseLate(caseItem)
+          : caseItem.status === statusFilter);
       const matchesSearch =
         !query ||
         caseItem.case_number?.toLowerCase().includes(query) ||
@@ -56,7 +60,7 @@ export function CasesList({ cases, isCoordinator, initialStatusFilter = "all" }:
     () => ({
       all: cases.length,
       open: cases.filter((c) => c.status === "open").length,
-      delayed: cases.filter((c) => c.status === "delayed").length,
+      delayed: getCasesWithLateDeadlines(cases).length,
       closed: cases.filter((c) => c.status === "closed").length,
     }),
     [cases]

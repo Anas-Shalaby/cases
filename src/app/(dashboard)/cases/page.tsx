@@ -1,7 +1,8 @@
 import { CasesList } from "@/components/cases/cases-list";
 import { CaseStatsCards } from "@/components/cases/case-stats-cards";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
-import { getCaseStats, getCases } from "@/lib/actions/cases";
+import { getCases } from "@/lib/actions/cases";
+import { computeCaseStats } from "@/lib/case-deadlines";
 import { getCurrentProfile } from "@/lib/actions/profile";
 import type { CaseStatus } from "@/types/database";
 
@@ -16,11 +17,11 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
       ? (status as CaseStatus)
       : "all";
 
-  const [cases, profile, stats] = await Promise.all([
+  const [cases, profile] = await Promise.all([
     getCases(),
     getCurrentProfile(),
-    getCaseStats(),
   ]);
+  const stats = computeCaseStats(cases);
   const isCoordinator = profile?.role === "coordinator";
 
   return (

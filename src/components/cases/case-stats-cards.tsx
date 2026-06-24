@@ -26,7 +26,7 @@ const cards = [
   },
   {
     key: "delayed" as const,
-    label: "قضايا متأخرة",
+    label: "مواعيد متأخرة",
     icon: AlertTriangle,
     color: "text-amber-600 bg-amber-50 dark:bg-amber-950 dark:text-amber-400",
   },

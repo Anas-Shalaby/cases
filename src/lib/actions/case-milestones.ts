@@ -4,10 +4,13 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireCoordinator } from "@/lib/auth/require-coordinator";
+import { logActivity } from "@/lib/actions/activity-logs";
 import {
   CASE_MILESTONE_KEYS,
   type CaseMilestoneKey,
 } from "@/lib/case-milestones";
+import { CASE_STATUS_LABELS } from "@/lib/constants";
+import type { CaseStatus } from "@/types/database";
 
 function todayDateString() {
   return new Date().toISOString().slice(0, 10);
@@ -45,12 +48,25 @@ export async function toggleCaseMilestone(
 
   const supabase = await createClient();
 
+  const statusChange: CaseStatus | undefined =
+    field === "case_closed_at"
+      ? completed
+        ? "closed"
+        : "open"
+      : undefined;
+
   const updatePayload =
     field === "case_closed_at" && completed
       ? { [field]: dateValue, status: "closed" as const }
       : field === "case_closed_at" && !completed
         ? { [field]: null, status: "open" as const }
         : { [field]: dateValue };
+
+  const { data: existingCase } = await supabase
+    .from("cases")
+    .select("case_number, case_name, status")
+    .eq("id", caseId)
+    .single();
 
   const { error } = await supabase
     .from("cases")
@@ -59,12 +75,37 @@ export async function toggleCaseMilestone(
 
   if (error) return { error: error.message };
 
+  if (
+    statusChange &&
+    existingCase &&
+    existingCase.status !== statusChange
+  ) {
+    await logActivity({
+      userId: auth.profile.id,
+      actionType: "update_case",
+      caseId,
+      description: `عدّل القضية ${existingCase.case_number}: غيّر الحالة من «${CASE_STATUS_LABELS[existingCase.status as CaseStatus]}» إلى «${CASE_STATUS_LABELS[statusChange]}» (عبر مرحلة غلق القضية)`,
+      metadata: {
+        case_number: existingCase.case_number,
+        case_name: existingCase.case_name,
+        old_status: existingCase.status,
+        new_status: statusChange,
+        via_milestone: field,
+      },
+    });
+  }
+
   revalidatePath("/");
   revalidatePath("/cases");
   revalidatePath(`/cases/${caseId}`);
   revalidatePath(`/cases/${caseId}/edit`);
+  revalidatePath("/activity-logs");
 
-  return { success: true as const, date: dateValue };
+  return {
+    success: true as const,
+    date: dateValue,
+    status: statusChange,
+  };
 }
 
 export async function updateCaseMilestoneDate(

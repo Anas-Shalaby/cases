@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireCoordinator } from "@/lib/auth/require-coordinator";
 import { logActivity } from "@/lib/actions/activity-logs";
 import { CASE_MILESTONE_KEYS } from "@/lib/case-milestones";
-import { collectCaseDeadlines, type DashboardOverview } from "@/lib/case-deadlines";
+import { collectCaseDeadlines, computeCaseStats, getCasesWithLateDeadlines, type DashboardOverview } from "@/lib/case-deadlines";
 import {
   CASE_STATUS_LABELS,
 } from "@/lib/constants";
@@ -73,42 +73,27 @@ export async function getProfiles(): Promise<
 }
 
 export async function getCaseStats() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.from("cases").select("status");
-
-  if (error) throw new Error(error.message);
-
-  const rows = (data ?? []) as { status: string }[];
-
-  const stats = {
-    total: rows.length,
-    open: rows.filter((c) => c.status === "open").length,
-    delayed: rows.filter((c) => c.status === "delayed").length,
-    closed: rows.filter((c) => c.status === "closed").length,
-  };
-
-  return stats;
+  const cases = await getCases();
+  return computeCaseStats(cases);
 }
 
 export async function getDashboardOverview(
   isCoordinator = false
 ): Promise<DashboardOverview> {
-  const [stats, cases] = await Promise.all([getCaseStats(), getCases()]);
+  const cases = await getCases();
+  const stats = computeCaseStats(cases);
 
   const activeCases = cases.filter((c) => c.status !== "closed");
-  const delayedCases = cases
-    .filter((c) => c.status === "delayed")
-    .slice(0, 5);
+  const delayedCases = getCasesWithLateDeadlines(cases).slice(0, 5);
 
   const allDeadlines = collectCaseDeadlines(activeCases);
   const overdueDeadlines = allDeadlines
-    .filter((d) => d.isOverdue)
-    .sort((a, b) => a.deadlineDate.localeCompare(b.deadlineDate))
-    .slice(0, 5);
+    .filter((d) => d.isLate)
+    .sort((a, b) => a.daysUntil - b.daysUntil)
+    .slice(0, 8);
 
   const upcomingDeadlines = allDeadlines
-    .filter((d) => !d.isOverdue && d.daysUntil <= 7)
+    .filter((d) => d.urgency === "upcoming" && d.daysUntil <= 7)
     .sort((a, b) => a.daysUntil - b.daysUntil)
     .slice(0, 5);
 
@@ -236,11 +221,17 @@ export async function updateCase(id: string, values: CaseFormValues) {
 
   const { data: existingCase } = await supabase
     .from("cases")
-    .select("case_number, case_name, status")
+    .select("case_number, case_name, status, case_closed_at")
     .eq("id", id)
     .single();
 
   const payload = toCasePayload(parsed.data);
+
+  // لا تُعاد الحالة لمفتوحة إذا كانت مرحلة غلق القضية مكتملة
+  if (existingCase?.case_closed_at) {
+    payload.status = "closed";
+  }
+
   const { error } = await supabase.from("cases").update(payload).eq("id", id);
 
   if (error) {

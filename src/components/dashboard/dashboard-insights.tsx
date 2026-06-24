@@ -11,7 +11,7 @@ import { CasesTable } from "@/components/cases/cases-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DEADLINE_LABELS, type DashboardOverview } from "@/lib/case-deadlines";
+import { DEADLINE_LABELS, formatDeadlineUrgency, type DashboardOverview } from "@/lib/case-deadlines";
 import { formatDate } from "@/lib/utils";
 
 interface DashboardInsightsProps {
@@ -103,7 +103,7 @@ export function DashboardInsights({
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <AlertTriangle className="size-4 text-amber-600" />
-              القضايا المتأخرة
+              قضايا بمواعيد متأخرة
               {stats.delayed > 0 && (
                 <Badge className="bg-amber-600 text-white">
                   {stats.delayed}
@@ -117,7 +117,7 @@ export function DashboardInsights({
           <CardContent className="pt-0">
             {delayedCases.length === 0 ? (
               <p className="text-muted-foreground py-6 text-center text-sm">
-                لا توجد قضايا بحالة «متأخرة» حالياً
+                لا توجد قضايا بمواعيد متجاوزة أو عاجلة (خلال يومين)
               </p>
             ) : (
               <CasesTable
@@ -133,7 +133,7 @@ export function DashboardInsights({
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <CalendarClock className="size-4 text-red-600" />
-              مواعيد متجاوزة
+              مواعيد متأخرة وعاجلة
               {overdueDeadlines.length > 0 && (
                 <Badge variant="destructive">{overdueDeadlines.length}</Badge>
               )}
@@ -142,7 +142,7 @@ export function DashboardInsights({
           <CardContent className="pt-0">
             {overdueDeadlines.length === 0 ? (
               <p className="text-muted-foreground py-6 text-center text-sm">
-                لا توجد مواعيد متجاوزة للقضايا النشطة
+                لا توجد مواعيد متجاوزة أو خلال يومين للقضايا النشطة
               </p>
             ) : (
               <ul className="divide-y rounded-lg border">
@@ -163,12 +163,18 @@ export function DashboardInsights({
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
-                      <Badge variant="destructive" className="text-xs">
+                      <Badge
+                        variant={d.isPastDue ? "destructive" : "outline"}
+                        className={
+                          d.isPastDue
+                            ? "text-xs"
+                            : "border-amber-300 bg-amber-50 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                        }
+                      >
                         {DEADLINE_LABELS[d.deadlineType]}
                       </Badge>
                       <span className="text-muted-foreground text-xs">
-                        {formatDate(d.deadlineDate)} — متأخر{" "}
-                        {Math.abs(d.daysUntil)} يوم
+                        {formatDate(d.deadlineDate)} — {formatDeadlineUrgency(d.daysUntil)}
                       </span>
                     </div>
                   </li>
@@ -185,7 +191,7 @@ export function DashboardInsights({
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <CalendarClock className="size-4 text-blue-600" />
-              مواعيد خلال 7 أيام
+              مواعيد خلال 3–7 أيام
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
@@ -211,7 +217,7 @@ export function DashboardInsights({
                       {DEADLINE_LABELS[d.deadlineType]}
                     </Badge>
                     <span className="text-muted-foreground text-xs">
-                      {formatDate(d.deadlineDate)} — بعد {d.daysUntil} يوم
+                      {formatDate(d.deadlineDate)} — {formatDeadlineUrgency(d.daysUntil)}
                     </span>
                   </div>
                 </li>
