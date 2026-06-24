@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Briefcase, Search } from "lucide-react";
+import { Briefcase, Search, X } from "lucide-react";
 
 import { CaseMobileCard } from "@/components/cases/case-mobile-card";
 import { CasesDataTable } from "@/components/cases/cases-data-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { CASE_STATUS_LABELS } from "@/lib/constants";
+import { CASE_STATUS_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { isCaseLate, getCasesWithLateDeadlines } from "@/lib/case-deadlines";
 import { cn } from "@/lib/utils";
 import type { CaseStatus, CaseWithRelations } from "@/types/database";
@@ -20,6 +20,10 @@ interface CasesListProps {
   cases: CaseWithRelations[];
   isCoordinator?: boolean;
   initialStatusFilter?: StatusFilter;
+  expertId?: string;
+  assistantId?: string;
+  memberFilterName?: string;
+  memberFilterRole?: "expert" | "assistant";
 }
 
 const statusFilters: { value: StatusFilter; label: string }[] = [
@@ -29,13 +33,31 @@ const statusFilters: { value: StatusFilter; label: string }[] = [
   { value: "closed", label: CASE_STATUS_LABELS.closed },
 ];
 
-export function CasesList({ cases, isCoordinator, initialStatusFilter = "all" }: CasesListProps) {
+export function CasesList({
+  cases,
+  isCoordinator,
+  initialStatusFilter = "all",
+  expertId,
+  assistantId,
+  memberFilterName,
+  memberFilterRole,
+}: CasesListProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
 
+  const memberFilteredCases = useMemo(() => {
+    if (expertId) {
+      return cases.filter((c) => c.expert_id === expertId);
+    }
+    if (assistantId) {
+      return cases.filter((c) => c.assistant_id === assistantId);
+    }
+    return cases;
+  }, [cases, expertId, assistantId]);
+
   const filteredCases = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return cases.filter((caseItem) => {
+    return memberFilteredCases.filter((caseItem) => {
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "delayed"
@@ -54,16 +76,16 @@ export function CasesList({ cases, isCoordinator, initialStatusFilter = "all" }:
         caseItem.assistant?.full_name?.toLowerCase().includes(query);
       return matchesStatus && matchesSearch;
     });
-  }, [cases, search, statusFilter]);
+  }, [memberFilteredCases, search, statusFilter]);
 
   const counts = useMemo(
     () => ({
-      all: cases.length,
-      open: cases.filter((c) => c.status === "open").length,
-      delayed: getCasesWithLateDeadlines(cases).length,
-      closed: cases.filter((c) => c.status === "closed").length,
+      all: memberFilteredCases.length,
+      open: memberFilteredCases.filter((c) => c.status === "open").length,
+      delayed: getCasesWithLateDeadlines(memberFilteredCases).length,
+      closed: memberFilteredCases.filter((c) => c.status === "closed").length,
     }),
-    [cases]
+    [memberFilteredCases]
   );
 
   if (cases.length === 0) {
@@ -89,6 +111,26 @@ export function CasesList({ cases, isCoordinator, initialStatusFilter = "all" }:
 
   return (
     <div className="space-y-4">
+      {memberFilterName && memberFilterRole && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm">
+              عرض قضايا{" "}
+              <span className="font-semibold">
+                {USER_ROLE_LABELS[memberFilterRole]}: {memberFilterName}
+              </span>
+              <span className="text-muted-foreground mr-2">
+                ({memberFilteredCases.length} قضية)
+              </span>
+            </p>
+            <Button variant="outline" size="sm" render={<Link href="/cases" />}>
+              <X className="size-4" />
+              إلغاء التصفية
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-md">
@@ -129,7 +171,7 @@ export function CasesList({ cases, isCoordinator, initialStatusFilter = "all" }:
           <CardTitle className="flex items-center justify-between text-base">
             <span>قائمة القضايا</span>
             <span className="text-muted-foreground text-sm font-normal">
-              {filteredCases.length} من {cases.length} قضية
+              {filteredCases.length} من {memberFilteredCases.length} قضية
             </span>
           </CardTitle>
         </CardHeader>

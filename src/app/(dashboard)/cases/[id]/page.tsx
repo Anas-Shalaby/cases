@@ -20,6 +20,7 @@ import { getCaseById } from "@/lib/actions/cases";
 import { getCaseDocuments } from "@/lib/actions/case-documents";
 import { getCurrentProfile } from "@/lib/actions/profile";
 import { USER_ROLE_LABELS } from "@/lib/constants";
+import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
 import { formatDate } from "@/lib/utils";
 
 interface CaseDetailPageProps {
@@ -108,15 +109,19 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           <CardContent className="space-y-3">
             <TeamRow
               label={USER_ROLE_LABELS.coordinator}
-              name={caseData.coordinator?.full_name}
+              memberName={caseData.coordinator?.full_name}
             />
             <TeamRow
               label={USER_ROLE_LABELS.expert}
-              name={caseData.expert?.full_name}
+              memberId={caseData.expert_id}
+              memberName={caseData.expert?.full_name}
+              role="expert"
             />
             <TeamRow
               label={USER_ROLE_LABELS.assistant}
-              name={caseData.assistant?.full_name}
+              memberId={caseData.assistant_id}
+              memberName={caseData.assistant?.full_name}
+              role="assistant"
             />
           </CardContent>
         </Card>
@@ -164,13 +169,31 @@ function DateRow({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-function TeamRow({ label, name }: { label: string; name?: string | null }) {
+function TeamRow({
+  label,
+  memberId,
+  memberName,
+  role,
+}: {
+  label: string;
+  memberId?: string | null;
+  memberName?: string | null;
+  role?: "expert" | "assistant";
+}) {
   return (
     <>
       <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
         <span className="text-muted-foreground shrink-0">{label}</span>
         <span className="truncate font-medium sm:max-w-[60%] sm:text-left">
-          {name ?? "—"}
+          {role ? (
+            <TeamMemberCasesLink
+              memberId={memberId}
+              memberName={memberName}
+              role={role}
+            />
+          ) : (
+            (memberName ?? "—")
+          )}
         </span>
       </div>
       <Separator />

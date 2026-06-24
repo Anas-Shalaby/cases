@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { CaseStatsCards } from "@/components/cases/case-stats-cards";
 import { CasesTable } from "@/components/cases/cases-table";
 import { DashboardInsights } from "@/components/dashboard/dashboard-insights";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
@@ -29,8 +28,6 @@ export default async function DashboardPage() {
       />
 
       {isCoordinator && <CoordinatorAlertsBanner />}
-
-      <CaseStatsCards stats={overview.stats} />
 
       <DashboardInsights
         overview={overview}

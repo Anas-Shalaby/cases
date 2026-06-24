@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   CalendarClock,
   Clock,
-  TrendingUp,
   Users,
 } from "lucide-react";
 
@@ -28,30 +27,9 @@ export function DashboardInsights({
   const { stats, delayedCases, overdueDeadlines, upcomingDeadlines, milestoneProgress, teamCount } =
     overview;
 
-  const openRate =
-    stats.total > 0 ? Math.round((stats.open / stats.total) * 100) : 0;
-
   return (
     <div className="space-y-6">
-      {/* إحصائيات إضافية */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              نسبة القضايا المفتوحة
-            </CardTitle>
-            <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-              <TrendingUp className="size-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{openRate}%</div>
-            <p className="text-muted-foreground mt-1 text-xs">
-              {stats.open} من {stats.total} قضية
-            </p>
-          </CardContent>
-        </Card>
-
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">

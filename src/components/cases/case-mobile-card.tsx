@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Eye, Pencil } from "lucide-react";
 
 import { StatusBadge } from "@/components/cases/status-badge";
+import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { USER_ROLE_LABELS } from "@/lib/constants";
@@ -75,15 +76,21 @@ export function CaseMobileCard({
             </div>
             <div className="min-w-0">
               <p className="mb-0.5">{USER_ROLE_LABELS.expert}</p>
-              <p className="text-foreground truncate">
-                {caseItem.expert?.full_name ?? "—"}
-              </p>
+              <TeamMemberCasesLink
+                memberId={caseItem.expert_id}
+                memberName={caseItem.expert?.full_name}
+                role="expert"
+                className="text-foreground truncate block"
+              />
             </div>
             <div className="min-w-0">
               <p className="mb-0.5">{USER_ROLE_LABELS.assistant}</p>
-              <p className="text-foreground truncate">
-                {caseItem.assistant?.full_name ?? "—"}
-              </p>
+              <TeamMemberCasesLink
+                memberId={caseItem.assistant_id}
+                memberName={caseItem.assistant?.full_name}
+                role="assistant"
+                className="text-foreground truncate block"
+              />
             </div>
           </div>
         )}

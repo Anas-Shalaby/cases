@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Eye, MoreHorizontal, Pencil } from "lucide-react";
 
 import { StatusBadge } from "@/components/cases/status-badge";
+import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -174,11 +175,21 @@ export function CasesDataTable({
             </TableCell>
 
             <TableCell className="align-top">
-              <CellText value={caseItem.expert?.full_name} muted />
+              <TeamMemberCasesLink
+                memberId={caseItem.expert_id}
+                memberName={caseItem.expert?.full_name}
+                role="expert"
+                muted
+              />
             </TableCell>
 
             <TableCell className="align-top">
-              <CellText value={caseItem.assistant?.full_name} muted />
+              <TeamMemberCasesLink
+                memberId={caseItem.assistant_id}
+                memberName={caseItem.assistant?.full_name}
+                role="assistant"
+                muted
+              />
             </TableCell>
 
             <TableCell className="sticky left-0 z-10 bg-card align-top group-hover:bg-muted/50">

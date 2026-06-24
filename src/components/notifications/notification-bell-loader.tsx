@@ -7,7 +7,7 @@ export async function NotificationBellLoader() {
   const profile = await getCurrentProfile();
   if (!profile || !canAccessNotifications(profile.role)) return null;
 
-  const notifications = await getNotifications(5);
+  const notifications = await getNotifications(5, { syncDeadlines: false });
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (

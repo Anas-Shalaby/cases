@@ -25,11 +25,12 @@ export async function syncDeadlineNotifications(): Promise<void> {
 }
 
 export async function getNotifications(
-  limit = 50
+  limit = 50,
+  options?: { syncDeadlines?: boolean }
 ): Promise<NotificationWithCase[]> {
   const profile = await requireNotificationAccess();
 
-  if (profile.role === "coordinator") {
+  if (profile.role === "coordinator" && options?.syncDeadlines !== false) {
     await syncDeadlineNotifications();
   }
 
@@ -52,10 +53,6 @@ export async function getNotifications(
 export async function getUnreadNotificationCount(): Promise<number> {
   const profile = await getCurrentProfile();
   if (!profile || !canAccessNotifications(profile.role)) return 0;
-
-  if (profile.role === "coordinator") {
-    await syncDeadlineNotifications();
-  }
 
   const supabase = await createClient();
   const { count, error } = await supabase
