@@ -52,6 +52,8 @@ export function ActivityLogsList({ logs }: ActivityLogsListProps) {
       update_case: byType("update_case"),
       delete_case: byType("delete_case"),
       create_user: byType("create_user"),
+      update_user: byType("update_user"),
+      delete_user: byType("delete_user"),
       upload_document: byType("upload_document"),
     };
   }, [logs]);

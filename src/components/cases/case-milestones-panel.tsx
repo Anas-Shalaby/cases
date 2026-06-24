@@ -3,9 +3,13 @@
 import { useState, useTransition } from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 
-import { toggleCaseMilestone } from "@/lib/actions/case-milestones";
+import {
+  toggleCaseMilestone,
+  updateCaseMilestoneDate,
+} from "@/lib/actions/case-milestones";
 import { CASE_MILESTONES, type CaseMilestoneKey } from "@/lib/case-milestones";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -13,13 +17,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Case } from "@/types/database";
 
 interface CaseMilestonesPanelProps {
   caseId: string;
   caseData: Case;
   readOnly?: boolean;
+}
+
+function todayDateString() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function buildMilestoneState(caseData: Case): Record<CaseMilestoneKey, string | null> {
@@ -47,12 +55,51 @@ export function CaseMilestonesPanel({
 
     setError(null);
     setPendingKey(key);
+
+    const dateToSave = checked ? (dates[key] ?? todayDateString()) : null;
+
+    if (checked && !dates[key]) {
+      setDates((prev) => ({ ...prev, [key]: dateToSave }));
+    }
+
     startTransition(async () => {
-      const result = await toggleCaseMilestone(caseId, key, checked);
+      const result = await toggleCaseMilestone(
+        caseId,
+        key,
+        checked,
+        dateToSave
+      );
       setPendingKey(null);
 
       if (result.error) {
         setError(result.error);
+        setDates(buildMilestoneState(caseData));
+        return;
+      }
+
+      if (result.success) {
+        setDates((prev) => ({ ...prev, [key]: result.date }));
+      }
+    });
+  }
+
+  function handleDateChange(key: CaseMilestoneKey, value: string) {
+    setDates((prev) => ({ ...prev, [key]: value || null }));
+  }
+
+  function handleDateBlur(key: CaseMilestoneKey) {
+    if (readOnly || !dates[key]) return;
+
+    setError(null);
+    setPendingKey(key);
+
+    startTransition(async () => {
+      const result = await updateCaseMilestoneDate(caseId, key, dates[key]!);
+      setPendingKey(null);
+
+      if (result.error) {
+        setError(result.error);
+        setDates(buildMilestoneState(caseData));
         return;
       }
 
@@ -71,7 +118,7 @@ export function CaseMilestonesPanel({
         <CardDescription>
           {readOnly
             ? `تم إنجاز ${completedCount} من ${CASE_MILESTONES.length} مراحل`
-            : "ضع علامة ✓ عند إتمام كل مرحلة — يُسجَّل تاريخ اليوم تلقائياً"}
+            : "ضع علامة ✓ عند إتمام كل مرحلة وعدّل التاريخ بجانبها"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-1">
@@ -112,7 +159,7 @@ export function CaseMilestonesPanel({
                   />
                 )}
 
-                <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                   <span
                     className={cn(
                       "text-sm font-medium leading-snug",
@@ -121,12 +168,28 @@ export function CaseMilestonesPanel({
                   >
                     {label}
                   </span>
-                  {isDone && (
-                    <span className="text-muted-foreground shrink-0 text-xs">
-                      {formatDate(dates[key])}
-                    </span>
-                  )}
-                  {!isDone && !readOnly && (
+
+                  {readOnly ? (
+                    isDone ? (
+                      <span className="text-muted-foreground shrink-0 text-xs">
+                        {dates[key]}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground text-xs sm:shrink-0">
+                        لم تُنجَز بعد
+                      </span>
+                    )
+                  ) : isDone ? (
+                    <Input
+                      type="date"
+                      value={dates[key] ?? ""}
+                      disabled={isPending}
+                      onChange={(e) => handleDateChange(key, e.target.value)}
+                      onBlur={() => handleDateBlur(key)}
+                      className="h-8 w-full max-w-[160px] text-xs sm:shrink-0"
+                      dir="ltr"
+                    />
+                  ) : (
                     <span className="text-muted-foreground text-xs sm:shrink-0">
                       لم تُنجَز بعد
                     </span>

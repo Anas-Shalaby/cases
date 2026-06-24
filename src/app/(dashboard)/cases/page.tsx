@@ -3,8 +3,19 @@ import { CaseStatsCards } from "@/components/cases/case-stats-cards";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { getCaseStats, getCases } from "@/lib/actions/cases";
 import { getCurrentProfile } from "@/lib/actions/profile";
+import type { CaseStatus } from "@/types/database";
 
-export default async function CasesPage() {
+interface CasesPageProps {
+  searchParams: Promise<{ status?: string }>;
+}
+
+export default async function CasesPage({ searchParams }: CasesPageProps) {
+  const { status } = await searchParams;
+  const initialStatus =
+    status === "open" || status === "delayed" || status === "closed"
+      ? (status as CaseStatus)
+      : "all";
+
   const [cases, profile, stats] = await Promise.all([
     getCases(),
     getCurrentProfile(),
@@ -21,7 +32,11 @@ export default async function CasesPage() {
 
       <CaseStatsCards stats={stats} />
 
-      <CasesList cases={cases} isCoordinator={isCoordinator} />
+      <CasesList
+        cases={cases}
+        isCoordinator={isCoordinator}
+        initialStatusFilter={initialStatus}
+      />
     </div>
   );
 }

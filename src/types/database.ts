@@ -11,6 +11,8 @@ export type LogActionType =
   | "update_case"
   | "delete_case"
   | "create_user"
+  | "update_user"
+  | "delete_user"
   | "upload_document";
 
 export interface Profile {

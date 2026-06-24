@@ -24,6 +24,8 @@ import { TEAM_MEMBER_ROLE_LABELS } from "@/lib/constants";
 import { cn, formatDate } from "@/lib/utils";
 import type { TeamMember } from "@/lib/actions/manage-users";
 import type { UserRole } from "@/types/database";
+import { DeleteTeamMemberButton } from "@/components/users/delete-team-member-button";
+import { EditTeamMemberDialog } from "@/components/users/edit-team-member-dialog";
 
 type RoleFilter = "all" | "coordinator" | "expert" | "assistant";
 
@@ -111,13 +113,14 @@ export function TeamUsersList({ members }: TeamUsersListProps) {
               <TableHead>البريد الإلكتروني</TableHead>
               <TableHead>الصلاحية</TableHead>
               <TableHead>تاريخ الانضمام</TableHead>
+              <TableHead className="w-24">إجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="text-muted-foreground py-10 text-center"
                 >
                   لا توجد نتائج لهذا التصفية
@@ -154,6 +157,13 @@ export function TeamUsersList({ members }: TeamUsersListProps) {
                 <p className="text-muted-foreground text-xs">
                   انضم {formatDate(member.created_at)}
                 </p>
+                <div className="flex items-center gap-1 border-t pt-3">
+                  <EditTeamMemberDialog member={member} />
+                  <DeleteTeamMemberButton
+                    userId={member.id}
+                    userName={member.full_name}
+                  />
+                </div>
               </CardContent>
             </Card>
           ))
@@ -175,6 +185,15 @@ function MemberRow({ member }: { member: TeamMember }) {
       </TableCell>
       <TableCell className="text-muted-foreground">
         {formatDate(member.created_at)}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-0.5">
+          <EditTeamMemberDialog member={member} />
+          <DeleteTeamMemberButton
+            userId={member.id}
+            userName={member.full_name}
+          />
+        </div>
       </TableCell>
     </TableRow>
   );

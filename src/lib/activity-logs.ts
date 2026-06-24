@@ -5,6 +5,8 @@ export const LOG_ACTION_LABELS: Record<LogActionType, string> = {
   update_case: "تعديل قضية",
   delete_case: "حذف قضية",
   create_user: "إضافة عضو",
+  update_user: "تعديل عضو",
+  delete_user: "حذف عضو",
   upload_document: "رفع مستند",
 };
 
@@ -17,6 +19,10 @@ export const LOG_ACTION_COLORS: Record<LogActionType, string> = {
     "text-red-700 bg-red-50 dark:bg-red-950 dark:text-red-300",
   create_user:
     "text-violet-700 bg-violet-50 dark:bg-violet-950 dark:text-violet-300",
+  update_user:
+    "text-indigo-700 bg-indigo-50 dark:bg-indigo-950 dark:text-indigo-300",
+  delete_user:
+    "text-rose-700 bg-rose-50 dark:bg-rose-950 dark:text-rose-300",
   upload_document:
     "text-amber-700 bg-amber-50 dark:bg-amber-950 dark:text-amber-300",
 };
@@ -28,5 +34,7 @@ export const LOG_ACTION_FILTERS: { value: "all" | LogActionType; label: string }
     { value: "update_case", label: LOG_ACTION_LABELS.update_case },
     { value: "delete_case", label: LOG_ACTION_LABELS.delete_case },
     { value: "create_user", label: LOG_ACTION_LABELS.create_user },
+    { value: "update_user", label: LOG_ACTION_LABELS.update_user },
+    { value: "delete_user", label: LOG_ACTION_LABELS.delete_user },
     { value: "upload_document", label: LOG_ACTION_LABELS.upload_document },
   ];

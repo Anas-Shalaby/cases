@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireCoordinator } from "@/lib/auth/require-coordinator";
 import { logActivity } from "@/lib/actions/activity-logs";
+import { CASE_MILESTONE_KEYS } from "@/lib/case-milestones";
+import { collectCaseDeadlines, type DashboardOverview } from "@/lib/case-deadlines";
 import {
   CASE_STATUS_LABELS,
 } from "@/lib/constants";
@@ -87,6 +89,65 @@ export async function getCaseStats() {
   };
 
   return stats;
+}
+
+export async function getDashboardOverview(
+  isCoordinator = false
+): Promise<DashboardOverview> {
+  const [stats, cases] = await Promise.all([getCaseStats(), getCases()]);
+
+  const activeCases = cases.filter((c) => c.status !== "closed");
+  const delayedCases = cases
+    .filter((c) => c.status === "delayed")
+    .slice(0, 5);
+
+  const allDeadlines = collectCaseDeadlines(activeCases);
+  const overdueDeadlines = allDeadlines
+    .filter((d) => d.isOverdue)
+    .sort((a, b) => a.deadlineDate.localeCompare(b.deadlineDate))
+    .slice(0, 5);
+
+  const upcomingDeadlines = allDeadlines
+    .filter((d) => !d.isOverdue && d.daysUntil <= 7)
+    .sort((a, b) => a.daysUntil - b.daysUntil)
+    .slice(0, 5);
+
+  const totalMilestones = activeCases.length * CASE_MILESTONE_KEYS.length;
+  let completedMilestones = 0;
+
+  for (const caseItem of activeCases) {
+    for (const key of CASE_MILESTONE_KEYS) {
+      if (caseItem[key]) completedMilestones++;
+    }
+  }
+
+  const averageCompletion =
+    totalMilestones > 0
+      ? Math.round((completedMilestones / totalMilestones) * 100)
+      : 0;
+
+  let teamCount: number | undefined;
+  if (isCoordinator) {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .in("role", ["coordinator", "expert", "assistant"]);
+    teamCount = count ?? 0;
+  }
+
+  return {
+    stats,
+    delayedCases,
+    overdueDeadlines,
+    upcomingDeadlines,
+    milestoneProgress: {
+      totalMilestones,
+      completedMilestones,
+      averageCompletion,
+    },
+    teamCount,
+  };
 }
 
 function toCasePayload(values: CaseFormValues) {

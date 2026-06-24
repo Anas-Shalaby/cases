@@ -2,32 +2,41 @@ import Link from "next/link";
 
 import { CaseStatsCards } from "@/components/cases/case-stats-cards";
 import { CasesTable } from "@/components/cases/cases-table";
+import { DashboardInsights } from "@/components/dashboard/dashboard-insights";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { CoordinatorAlertsBanner } from "@/components/notifications/coordinator-alerts-banner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getCaseStats, getCases } from "@/lib/actions/cases";
+import { getCases, getDashboardOverview } from "@/lib/actions/cases";
 import { getCurrentProfile } from "@/lib/actions/profile";
 
 export default async function DashboardPage() {
-  const [stats, cases, profile] = await Promise.all([
-    getCaseStats(),
-    getCases(),
-    getCurrentProfile(),
-  ]);
-  const recentCases = cases.slice(0, 5);
+  const profile = await getCurrentProfile();
   const isCoordinator = profile?.role === "coordinator";
+
+  const [overview, cases] = await Promise.all([
+    getDashboardOverview(isCoordinator),
+    getCases(),
+  ]);
+
+  const recentCases = cases.slice(0, 5);
 
   return (
     <div className="space-y-8">
       <DashboardHeader
         title="لوحة التحكم"
-        description="نظرة عامة على حالة القضايا"
+        description="نظرة عامة على حالة القضايا والمواعيد والإحصائيات"
       />
 
       {isCoordinator && <CoordinatorAlertsBanner />}
 
-      <CaseStatsCards stats={stats} />
+      <CaseStatsCards stats={overview.stats} />
+
+      <DashboardInsights
+        overview={overview}
+        isCoordinator={isCoordinator}
+        canEdit={isCoordinator}
+      />
 
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

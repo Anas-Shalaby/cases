@@ -18,6 +18,7 @@ type StatusFilter = "all" | CaseStatus;
 interface CasesListProps {
   cases: CaseWithRelations[];
   isCoordinator?: boolean;
+  initialStatusFilter?: StatusFilter;
 }
 
 const statusFilters: { value: StatusFilter; label: string }[] = [
@@ -27,9 +28,9 @@ const statusFilters: { value: StatusFilter; label: string }[] = [
   { value: "closed", label: CASE_STATUS_LABELS.closed },
 ];
 
-export function CasesList({ cases, isCoordinator }: CasesListProps) {
+export function CasesList({ cases, isCoordinator, initialStatusFilter = "all" }: CasesListProps) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
 
   const filteredCases = useMemo(() => {
     const query = search.trim().toLowerCase();
