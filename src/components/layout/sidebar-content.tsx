@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Bell, ClipboardList, LayoutDashboard, LogOut, Scale, Settings, Users } from "lucide-react";
+import { Briefcase, Bell, ClipboardList, FileBarChart, LayoutDashboard, LogOut, Scale, Settings, Users } from "lucide-react";
 
 import { logout } from "@/lib/actions/auth";
 import { NAV_ITEMS, USER_ROLE_LABELS } from "@/lib/constants";
@@ -16,6 +16,7 @@ const iconMap = {
   LayoutDashboard,
   Briefcase,
   Bell,
+  FileBarChart,
   Users,
   ClipboardList,
   Settings,

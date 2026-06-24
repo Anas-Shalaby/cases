@@ -6,6 +6,7 @@ import { Briefcase, Search, X } from "lucide-react";
 
 import { CaseMobileCard } from "@/components/cases/case-mobile-card";
 import { CasesDataTable } from "@/components/cases/cases-data-table";
+import { ExportCasesButtons } from "@/components/cases/export-cases-buttons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,8 @@ interface CasesListProps {
   assistantId?: string;
   memberFilterName?: string;
   memberFilterRole?: "expert" | "assistant";
+  enableExpertExport?: boolean;
+  exportExpertName?: string;
 }
 
 const statusFilters: { value: StatusFilter; label: string }[] = [
@@ -41,6 +44,8 @@ export function CasesList({
   assistantId,
   memberFilterName,
   memberFilterRole,
+  enableExpertExport = false,
+  exportExpertName,
 }: CasesListProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
@@ -123,10 +128,18 @@ export function CasesList({
                 ({memberFilteredCases.length} قضية)
               </span>
             </p>
-            <Button variant="outline" size="sm" render={<Link href="/cases" />}>
-              <X className="size-4" />
-              إلغاء التصفية
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" render={<Link href="/cases" />}>
+                <X className="size-4" />
+                إلغاء التصفية
+              </Button>
+              {memberFilterRole === "expert" && (
+                <ExportCasesButtons
+                  cases={filteredCases}
+                  expertName={memberFilterName}
+                />
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -142,8 +155,9 @@ export function CasesList({
               className="pr-9"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
-            {statusFilters.map((filter) => (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+            <div className="flex flex-wrap gap-2">
+              {statusFilters.map((filter) => (
               <button
                 key={filter.value}
                 type="button"
@@ -160,7 +174,14 @@ export function CasesList({
                   ({counts[filter.value]})
                 </span>
               </button>
-            ))}
+              ))}
+            </div>
+            {enableExpertExport && !expertId && filteredCases.length > 0 && (
+              <ExportCasesButtons
+                cases={filteredCases}
+                expertName={exportExpertName}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

@@ -32,6 +32,11 @@ export const NAV_ITEMS = [
     notificationAccess: true,
   },
   {
+    href: "/reports",
+    label: "التقارير الشهرية",
+    icon: "FileBarChart" as const,
+  },
+  {
     href: "/users",
     label: "أعضاء الفريق",
     icon: "Users" as const,

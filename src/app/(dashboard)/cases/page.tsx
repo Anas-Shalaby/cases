@@ -28,6 +28,7 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
     getCurrentProfile(),
   ]);
   const isCoordinator = profile?.role === "coordinator";
+  const isExpert = profile?.role === "expert";
 
   let expertId: string | undefined;
   let assistantId: string | undefined;
@@ -71,6 +72,10 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
         assistantId={assistantId}
         memberFilterName={memberFilterName}
         memberFilterRole={memberFilterRole}
+        enableExpertExport={isExpert || !!expertId}
+        exportExpertName={
+          memberFilterName ?? (isExpert ? profile?.full_name : undefined)
+        }
       />
     </div>
   );
