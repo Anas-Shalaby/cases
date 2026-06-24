@@ -8,7 +8,7 @@ import { canAccessNotifications } from "@/lib/notifications-access";
 
 const PAGE_DESCRIPTIONS = {
   coordinator:
-    "متابعة مواعيد التقارير والاجتماعات والمستندات والقضايا المسندة",
+    "متابعة مواعيد التقارير والاجتماعات والمستندات لجميع القضايا في النظام",
   expert: "إشعارات القضايا المُسندة إليك وتحديثاتها",
   assistant: "إشعاراتك وتحديثات القضايا المرتبطة بك",
 } as const;
