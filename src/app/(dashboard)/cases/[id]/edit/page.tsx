@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { CaseEditPanels } from "@/components/cases/case-edit-panels";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
-import { getCaseById, getProfiles, updateCase } from "@/lib/actions/cases";
+import { getCaseById, getProfiles } from "@/lib/actions/cases";
 import { getCurrentProfile } from "@/lib/actions/profile";
 
 interface EditCasePageProps {
@@ -21,11 +21,6 @@ export default async function EditCasePage({ params }: EditCasePageProps) {
   if (!profile) redirect("/login");
   if (profile.role !== "coordinator") redirect(`/cases/${id}`);
 
-  const handleUpdate = (
-    values: Parameters<typeof updateCase>[1],
-    milestones: Parameters<typeof updateCase>[2]
-  ) => updateCase(id, values, milestones);
-
   return (
     <div className="space-y-6">
       <DashboardHeader
@@ -36,7 +31,6 @@ export default async function EditCasePage({ params }: EditCasePageProps) {
         caseId={id}
         caseData={caseData}
         profiles={profiles}
-        onSubmit={handleUpdate}
       />
     </div>
   );

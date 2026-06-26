@@ -11,6 +11,7 @@ import {
 } from "@/components/cases/case-milestones-panel";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { updateCase } from "@/lib/actions/cases";
 import { CASE_MILESTONE_KEYS, type CaseMilestoneKey } from "@/lib/case-milestones";
 import {
   emptyDate,
@@ -23,10 +24,6 @@ interface CaseEditPanelsProps {
   caseId: string;
   caseData: CaseWithRelations;
   profiles: Pick<Profile, "id" | "full_name" | "role">[];
-  onSubmit: (
-    values: CaseFormValues,
-    milestones: Record<CaseMilestoneKey, string | null>
-  ) => Promise<{ error?: unknown; success?: boolean; id?: string } | void>;
 }
 
 function buildMilestoneState(
@@ -67,7 +64,6 @@ export function CaseEditPanels({
   caseId,
   caseData,
   profiles,
-  onSubmit,
 }: CaseEditPanelsProps) {
   const router = useRouter();
   const formRef = useRef<CaseFormHandle>(null);
@@ -98,7 +94,7 @@ export function CaseEditPanels({
 
       if (!milestonesValid || !formValid) return;
 
-      const result = await onSubmit(values, milestonesPanel.getDates());
+      const result = await updateCase(caseId, values, milestonesPanel.getDates());
 
       if (result && "success" in result && result.success) {
         router.push(`/cases/${caseId}`);
