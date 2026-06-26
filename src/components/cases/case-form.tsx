@@ -3,7 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useTransition, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useTransition,
+  useState,
+} from "react";
 import { useForm } from "react-hook-form";
 
 import { ProfileSelect } from "@/components/cases/profile-select";
@@ -33,6 +40,13 @@ import {
 } from "@/lib/validations/case";
 import type { Case, Profile } from "@/types/database";
 
+export type CaseFormHandle = {
+  triggerValidation: () => Promise<boolean>;
+  getValues: () => CaseFormValues;
+  setFormError: (message: string | null) => void;
+  applyFieldErrors: (errors: Record<string, string[] | undefined>) => void;
+};
+
 interface CaseFormProps {
   profiles: Pick<Profile, "id" | "full_name" | "role">[];
   initialData?: Case;
@@ -45,6 +59,7 @@ interface CaseFormProps {
   hideSubmit?: boolean;
   onValidationChange?: (hasErrors: boolean) => void;
   onPendingChange?: (isPending: boolean) => void;
+  validateOnChange?: boolean;
 }
 
 const defaultValues: CaseFormValues = {
@@ -87,17 +102,22 @@ function caseToFormValues(caseData: Case): CaseFormValues {
   };
 }
 
-export function CaseForm({
-  profiles,
-  initialData,
-  dateContext,
-  onSubmit,
-  submitLabel = "حفظ القضية",
-  formId = "case-form",
-  hideSubmit = false,
-  onValidationChange,
-  onPendingChange,
-}: CaseFormProps) {
+export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
+  function CaseForm(
+    {
+      profiles,
+      initialData,
+      dateContext,
+      onSubmit,
+      submitLabel = "حفظ القضية",
+      formId = "case-form",
+      hideSubmit = false,
+      onValidationChange,
+      onPendingChange,
+      validateOnChange = true,
+    },
+    ref
+  ) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
@@ -110,8 +130,8 @@ export function CaseForm({
   const form = useForm<CaseFormValues>({
     resolver: zodResolver(schema),
     defaultValues: initialData ? caseToFormValues(initialData) : defaultValues,
-    mode: "onChange",
-    reValidateMode: "onChange",
+    mode: validateOnChange ? "onChange" : "onSubmit",
+    reValidateMode: validateOnChange ? "onChange" : "onSubmit",
   });
 
   const {
@@ -120,11 +140,30 @@ export function CaseForm({
     setValue,
     watch,
     trigger,
+    getValues,
+    setError,
     formState: { errors, isValid },
   } = form;
 
+  useImperativeHandle(ref, () => ({
+    triggerValidation: () => trigger(),
+    getValues,
+    setFormError,
+    applyFieldErrors: (fieldErrors) => {
+      for (const [field, messages] of Object.entries(fieldErrors)) {
+        if (field === "_form") {
+          setFormError(messages?.[0] ?? null);
+          continue;
+        }
+        if (messages?.[0]) {
+          setError(field as keyof CaseFormValues, { message: messages[0] });
+        }
+      }
+    },
+  }));
+
   useEffect(() => {
-    if (dateContext) {
+    if (dateContext && validateOnChange) {
       void trigger([
         "assignment_date",
         "meeting_date",
@@ -132,11 +171,13 @@ export function CaseForm({
         "final_report_date",
       ]);
     }
-  }, [dateContext, trigger]);
+  }, [dateContext, trigger, validateOnChange]);
 
   useEffect(() => {
-    onValidationChange?.(!isValid);
-  }, [isValid, onValidationChange]);
+    if (validateOnChange) {
+      onValidationChange?.(!isValid);
+    }
+  }, [isValid, onValidationChange, validateOnChange]);
 
   useEffect(() => {
     onPendingChange?.(isPending);
@@ -439,7 +480,7 @@ export function CaseForm({
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-start">
             <Button
               type="submit"
-              disabled={isPending || !isValid}
+              disabled={isPending || (validateOnChange && !isValid)}
               className="w-full sm:w-auto"
             >
               {isPending && <Loader2 className="size-4 animate-spin" />}
@@ -450,4 +491,5 @@ export function CaseForm({
       )}
     </form>
   );
-}
+  }
+);

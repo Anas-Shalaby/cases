@@ -2,41 +2,64 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 
-import { CaseForm } from "@/components/cases/case-form";
-import { CaseMilestonesPanel } from "@/components/cases/case-milestones-panel";
+import { CaseForm, type CaseFormHandle } from "@/components/cases/case-form";
+import {
+  CaseMilestonesPanel,
+  type CaseMilestonesPanelHandle,
+} from "@/components/cases/case-milestones-panel";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import type { CaseFormDateContext, CaseFormValues } from "@/lib/validations/case";
 import { CASE_MILESTONE_KEYS, type CaseMilestoneKey } from "@/lib/case-milestones";
-import type { CaseStatus, CaseWithRelations, Profile } from "@/types/database";
-
-const CASE_EDIT_FORM_ID = "case-edit-form";
+import {
+  emptyDate,
+  type CaseFormDateContext,
+  type CaseFormValues,
+} from "@/lib/validations/case";
+import type { CaseWithRelations, Profile } from "@/types/database";
 
 interface CaseEditPanelsProps {
   caseId: string;
   caseData: CaseWithRelations;
   profiles: Pick<Profile, "id" | "full_name" | "role">[];
   onSubmit: (
-    values: CaseFormValues
+    values: CaseFormValues,
+    milestones: Record<CaseMilestoneKey, string | null>
   ) => Promise<{ error?: unknown; success?: boolean; id?: string } | void>;
 }
 
-function toDateContext(caseItem: CaseWithRelations): CaseFormDateContext {
+function buildMilestoneState(
+  caseItem: CaseWithRelations
+): Record<CaseMilestoneKey, string | null> {
+  return CASE_MILESTONE_KEYS.reduce(
+    (acc, key) => {
+      acc[key] = caseItem[key] ?? null;
+      return acc;
+    },
+    {} as Record<CaseMilestoneKey, string | null>
+  );
+}
+
+function toDateContext(
+  caseItem: CaseWithRelations,
+  milestones: Record<CaseMilestoneKey, string | null>
+): CaseFormDateContext {
   return {
     assignment_date: caseItem.assignment_date,
     meeting_date: caseItem.meeting_date,
     initial_report_date: caseItem.initial_report_date,
     final_report_date: caseItem.final_report_date,
-    case_received_at: caseItem.case_received_at,
-    parties_invited_at: caseItem.parties_invited_at,
-    experts_meeting_at: caseItem.experts_meeting_at,
-    defendant_documents_received_at: caseItem.defendant_documents_received_at,
-    plaintiff_documents_received_at: caseItem.plaintiff_documents_received_at,
-    initial_report_prepared_at: caseItem.initial_report_prepared_at,
-    final_report_prepared_at: caseItem.final_report_prepared_at,
-    case_closed_at: caseItem.case_closed_at,
+    ...milestones,
+  };
+}
+
+function scheduleDatesFromValues(values: CaseFormValues) {
+  return {
+    assignment_date: emptyDate(values.assignment_date),
+    meeting_date: emptyDate(values.meeting_date),
+    initial_report_date: emptyDate(values.initial_report_date),
+    final_report_date: emptyDate(values.final_report_date),
   };
 }
 
@@ -47,75 +70,82 @@ export function CaseEditPanels({
   onSubmit,
 }: CaseEditPanelsProps) {
   const router = useRouter();
-  const [caseSnapshot, setCaseSnapshot] = useState(caseData);
-  const [hasDateErrors, setHasDateErrors] = useState(false);
-  const [formHasErrors, setFormHasErrors] = useState(false);
-  const [formPending, setFormPending] = useState(false);
+  const formRef = useRef<CaseFormHandle>(null);
+  const milestonesRef = useRef<CaseMilestonesPanelHandle>(null);
+  const [isPending, startTransition] = useTransition();
+  const [draftMilestones, setDraftMilestones] = useState(() =>
+    buildMilestoneState(caseData)
+  );
 
-  const dateContext = useMemo(() => toDateContext(caseSnapshot), [caseSnapshot]);
+  const dateContext = useMemo(
+    () => toDateContext(caseData, draftMilestones),
+    [caseData, draftMilestones]
+  );
 
-  function handleStatusChange(status: CaseStatus) {
-    setCaseSnapshot((prev) => ({ ...prev, status }));
+  function handleSave() {
+    const form = formRef.current;
+    const milestonesPanel = milestonesRef.current;
+    if (!form || !milestonesPanel) return;
+
+    form.setFormError(null);
+
+    const values = form.getValues();
+    const scheduleDates = scheduleDatesFromValues(values);
+
+    startTransition(async () => {
+      const milestonesValid = milestonesPanel.validate(scheduleDates);
+      const formValid = await form.triggerValidation();
+
+      if (!milestonesValid || !formValid) return;
+
+      const result = await onSubmit(values, milestonesPanel.getDates());
+
+      if (result && "success" in result && result.success) {
+        router.push(`/cases/${caseId}`);
+        router.refresh();
+        return;
+      }
+
+      if (result?.error) {
+        const err = result.error as Record<string, string[] | undefined>;
+        form.applyFieldErrors(err);
+      }
+    });
   }
-
-  function handleMilestoneSync(update: {
-    caseClosedAt: string | null;
-    status: CaseStatus;
-  }) {
-    setCaseSnapshot((prev) => ({
-      ...prev,
-      case_closed_at: update.caseClosedAt,
-      status: update.status,
-    }));
-    router.refresh();
-  }
-
-  function handleMilestoneDateChange(
-    key: CaseMilestoneKey,
-    value: string | null
-  ) {
-    setCaseSnapshot((prev) => ({ ...prev, [key]: value }));
-  }
-
-  const saveDisabled = formPending || formHasErrors || hasDateErrors;
-  const milestonesKey = CASE_MILESTONE_KEYS.map(
-    (key) => caseSnapshot[key] ?? ""
-  ).join("|");
 
   return (
     <div className="space-y-6">
       <CaseForm
-        formId={CASE_EDIT_FORM_ID}
+        ref={formRef}
+        formId="case-edit-form"
         hideSubmit
+        validateOnChange={false}
         profiles={profiles}
-        initialData={caseSnapshot}
+        initialData={caseData}
         dateContext={dateContext}
-        onSubmit={onSubmit}
+        onSubmit={async () => ({})}
         submitLabel="حفظ التعديلات"
-        onValidationChange={setFormHasErrors}
-        onPendingChange={setFormPending}
+        onPendingChange={() => undefined}
       />
 
       <CaseMilestonesPanel
-        key={milestonesKey}
+        ref={milestonesRef}
         caseId={caseId}
-        caseData={caseSnapshot}
-        onStatusChange={handleStatusChange}
-        onCloseMilestoneChange={handleMilestoneSync}
-        onMilestoneDateChange={handleMilestoneDateChange}
-        onValidationChange={setHasDateErrors}
+        caseData={caseData}
+        deferSave
+        onDraftChange={setDraftMilestones}
       />
 
       <Separator />
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-start">
         <Button
-          type="submit"
-          form={CASE_EDIT_FORM_ID}
-          disabled={saveDisabled}
+          type="button"
+          onClick={handleSave}
+          disabled={isPending}
           className="w-full sm:w-auto"
         >
-          {formPending && <Loader2 className="size-4 animate-spin" />}
+          {isPending && <Loader2 className="size-4 animate-spin" />}
           حفظ التعديلات
         </Button>
       </div>

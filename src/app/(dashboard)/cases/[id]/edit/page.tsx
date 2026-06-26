@@ -21,7 +21,10 @@ export default async function EditCasePage({ params }: EditCasePageProps) {
   if (!profile) redirect("/login");
   if (profile.role !== "coordinator") redirect(`/cases/${id}`);
 
-  const handleUpdate = updateCase.bind(null, id);
+  const handleUpdate = (
+    values: Parameters<typeof updateCase>[1],
+    milestones: Parameters<typeof updateCase>[2]
+  ) => updateCase(id, values, milestones);
 
   return (
     <div className="space-y-6">

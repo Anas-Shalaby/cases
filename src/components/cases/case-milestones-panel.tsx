@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useState,
+} from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 
 import {
@@ -9,6 +13,7 @@ import {
 } from "@/lib/actions/case-milestones";
 import {
   buildMilestoneStateAfterUpdate,
+  validateCaseDates,
   validateMilestoneDate,
 } from "@/lib/case-date-rules";
 import { CASE_MILESTONES, type CaseMilestoneKey } from "@/lib/case-milestones";
@@ -24,17 +29,29 @@ import {
 import { cn } from "@/lib/utils";
 import type { Case, CaseStatus } from "@/types/database";
 
+export type MilestoneScheduleDates = {
+  assignment_date: string | null;
+  meeting_date: string | null;
+  initial_report_date: string | null;
+  final_report_date: string | null;
+};
+
+export type CaseMilestonesPanelHandle = {
+  validate: (scheduleDates: MilestoneScheduleDates) => boolean;
+  getDates: () => Record<CaseMilestoneKey, string | null>;
+};
+
 interface CaseMilestonesPanelProps {
   caseId: string;
   caseData: Case;
   readOnly?: boolean;
+  deferSave?: boolean;
   onStatusChange?: (status: CaseStatus) => void;
   onCloseMilestoneChange?: (update: {
     caseClosedAt: string | null;
     status: CaseStatus;
   }) => void;
-  onMilestoneDateChange?: (key: CaseMilestoneKey, value: string | null) => void;
-  onValidationChange?: (hasErrors: boolean) => void;
+  onDraftChange?: (dates: Record<CaseMilestoneKey, string | null>) => void;
 }
 
 function todayDateString() {
@@ -51,146 +68,174 @@ function buildMilestoneState(caseData: Case): Record<CaseMilestoneKey, string | 
   );
 }
 
-export function CaseMilestonesPanel({
-  caseId,
-  caseData,
-  readOnly = false,
-  onStatusChange,
-  onCloseMilestoneChange,
-  onMilestoneDateChange,
-  onValidationChange,
-}: CaseMilestonesPanelProps) {
+export const CaseMilestonesPanel = forwardRef<
+  CaseMilestonesPanelHandle,
+  CaseMilestonesPanelProps
+>(function CaseMilestonesPanel(
+  {
+    caseId,
+    caseData,
+    readOnly = false,
+    deferSave = false,
+    onStatusChange,
+    onCloseMilestoneChange,
+    onDraftChange,
+  },
+  ref
+) {
   const [dates, setDates] = useState(() => buildMilestoneState(caseData));
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<CaseMilestoneKey, string>>
   >({});
-  const [isPending, startTransition] = useTransition();
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
   const [pendingKey, setPendingKey] = useState<CaseMilestoneKey | null>(null);
+
+  function updateDates(
+    updater: (
+      prev: Record<CaseMilestoneKey, string | null>
+    ) => Record<CaseMilestoneKey, string | null>
+  ) {
+    setDates((prev) => {
+      const next = updater(prev);
+      if (deferSave) {
+        onDraftChange?.(next);
+      }
+      return next;
+    });
+  }
 
   function clearFieldError(key: CaseMilestoneKey) {
     setFieldErrors((prev) => {
       if (!prev[key]) return prev;
       const next = { ...prev };
       delete next[key];
-      onValidationChange?.(Object.keys(next).length > 0);
       return next;
     });
   }
 
-  function setFieldError(key: CaseMilestoneKey, message: string) {
-    setFieldErrors((prev) => {
-      const next = { ...prev, [key]: message };
-      onValidationChange?.(true);
-      return next;
-    });
+  function buildMergedContext(scheduleDates: MilestoneScheduleDates) {
+    return {
+      ...caseData,
+      ...scheduleDates,
+      ...dates,
+    };
   }
 
-  function validateMilestoneLocally(
-    key: CaseMilestoneKey,
-    date: string
-  ): string | null {
-    const nextState = buildMilestoneStateAfterUpdate(
-      { ...caseData, ...dates },
-      key,
-      date
+  function runValidation(scheduleDates: MilestoneScheduleDates): boolean {
+    const merged = buildMergedContext(scheduleDates);
+    const errors: Partial<Record<CaseMilestoneKey, string>> = {};
+
+    for (const { key } of CASE_MILESTONES) {
+      const value = dates[key];
+      if (!value) continue;
+      const err = validateMilestoneDate(merged, key, value);
+      if (err) errors[key] = err;
+    }
+
+    const fullError = validateCaseDates(merged);
+    setFieldErrors(errors);
+    setGeneralError(
+      fullError && Object.keys(errors).length === 0 ? fullError : null
     );
-    return validateMilestoneDate(nextState, key, date);
+
+    return Object.keys(errors).length === 0 && !fullError;
+  }
+
+  useImperativeHandle(ref, () => ({
+    validate: runValidation,
+    getDates: () => dates,
+  }));
+
+  async function saveToggle(
+    key: CaseMilestoneKey,
+    checked: boolean,
+    dateToSave: string | null
+  ) {
+    setIsPending(true);
+    setPendingKey(key);
+
+    const result = await toggleCaseMilestone(caseId, key, checked, dateToSave);
+
+    setIsPending(false);
+    setPendingKey(null);
+
+    if (result.error) {
+      setFieldErrors((prev) => ({ ...prev, [key]: result.error! }));
+      setDates(buildMilestoneState(caseData));
+      return;
+    }
+
+    if (result.success) {
+      setDates((prev) => ({ ...prev, [key]: result.date }));
+
+      if (key === "case_closed_at" && result.status) {
+        onStatusChange?.(result.status);
+        onCloseMilestoneChange?.({
+          caseClosedAt: result.date,
+          status: result.status,
+        });
+      }
+    }
+  }
+
+  async function saveDate(key: CaseMilestoneKey, dateValue: string) {
+    setIsPending(true);
+    setPendingKey(key);
+
+    const result = await updateCaseMilestoneDate(caseId, key, dateValue);
+
+    setIsPending(false);
+    setPendingKey(null);
+
+    if (result.error) {
+      setFieldErrors((prev) => ({ ...prev, [key]: result.error! }));
+      setDates(buildMilestoneState(caseData));
+      return;
+    }
+
+    if (result.success) {
+      setDates((prev) => ({ ...prev, [key]: result.date }));
+    }
   }
 
   function handleToggle(key: CaseMilestoneKey, checked: boolean) {
     if (readOnly) return;
 
     clearFieldError(key);
-    setPendingKey(key);
+    setGeneralError(null);
 
     const dateToSave = checked ? (dates[key] ?? todayDateString()) : null;
 
-    if (checked && dateToSave) {
-      const validationError = validateMilestoneLocally(key, dateToSave);
-      if (validationError) {
-        setFieldError(key, validationError);
-        setPendingKey(null);
-        return;
-      }
+    if (deferSave) {
+      updateDates((prev) => ({ ...prev, [key]: dateToSave }));
+      return;
     }
 
     if (checked && !dates[key]) {
-      setDates((prev) => ({ ...prev, [key]: dateToSave }));
+      updateDates((prev) => ({ ...prev, [key]: dateToSave }));
     }
 
-    startTransition(async () => {
-      const result = await toggleCaseMilestone(
-        caseId,
-        key,
-        checked,
-        dateToSave
-      );
-      setPendingKey(null);
-
-      if (result.error) {
-        setFieldError(key, result.error);
-        setDates(buildMilestoneState(caseData));
-        return;
-      }
-
-      if (result.success) {
-        setDates((prev) => ({ ...prev, [key]: result.date }));
-        onMilestoneDateChange?.(key, result.date);
-
-        if (key === "case_closed_at" && result.status) {
-          onStatusChange?.(result.status);
-          onCloseMilestoneChange?.({
-            caseClosedAt: result.date,
-            status: result.status,
-          });
-        }
-      }
-    });
+    void saveToggle(key, checked, dateToSave);
   }
 
   function handleDateChange(key: CaseMilestoneKey, value: string) {
     clearFieldError(key);
-    setDates((prev) => ({ ...prev, [key]: value || null }));
+    setGeneralError(null);
+    updateDates((prev) => ({ ...prev, [key]: value || null }));
   }
 
   function handleDateBlur(key: CaseMilestoneKey) {
-    if (readOnly || !dates[key]) return;
+    if (readOnly || deferSave || !dates[key]) return;
 
     const dateValue = dates[key]!;
-    const validationError = validateMilestoneLocally(key, dateValue);
-
-    if (validationError) {
-      setFieldError(key, validationError);
-      setDates((prev) => ({
-        ...prev,
-        [key]: caseData[key] ?? null,
-      }));
-      return;
-    }
-
     if (dateValue === (caseData[key] ?? null)) return;
 
-    setPendingKey(key);
-
-    startTransition(async () => {
-      const result = await updateCaseMilestoneDate(caseId, key, dateValue);
-      setPendingKey(null);
-
-      if (result.error) {
-        setFieldError(key, result.error);
-        setDates(buildMilestoneState(caseData));
-        return;
-      }
-
-      if (result.success) {
-        setDates((prev) => ({ ...prev, [key]: result.date }));
-        onMilestoneDateChange?.(key, result.date);
-      }
-    });
+    void saveDate(key, dateValue);
   }
 
   const completedCount = CASE_MILESTONES.filter(({ key }) => dates[key]).length;
-  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
+  const hasErrors = Object.keys(fieldErrors).length > 0 || !!generalError;
 
   return (
     <Card>
@@ -199,13 +244,15 @@ export function CaseMilestonesPanel({
         <CardDescription>
           {readOnly
             ? `تم إنجاز ${completedCount} من ${CASE_MILESTONES.length} مراحل`
-            : "ضع علامة ✓ عند إتمام كل مرحلة — عند غلق القضية تتغير حالتها إلى «مغلقة» تلقائياً"}
+            : deferSave
+              ? "عدّل المراحل والتواريخ ثم اضغط «حفظ التعديلات» — التحقق يتم عند الحفظ"
+              : "ضع علامة ✓ عند إتمام كل مرحلة — عند غلق القضية تتغير حالتها إلى «مغلقة» تلقائياً"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-1">
-        {hasFieldErrors && (
+        {hasErrors && (
           <div className="mb-3 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            صحّح تواريخ المراحل غير الصالحة قبل حفظ التعديلات
+            {generalError ?? "صحّح تواريخ المراحل غير الصالحة الموضّحة أدناه"}
           </div>
         )}
 
@@ -294,4 +341,4 @@ export function CaseMilestonesPanel({
       </CardContent>
     </Card>
   );
-}
+});

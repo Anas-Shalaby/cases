@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireCoordinator } from "@/lib/auth/require-coordinator";
 import { logActivity } from "@/lib/actions/activity-logs";
-import { CASE_MILESTONE_KEYS } from "@/lib/case-milestones";
+import { CASE_MILESTONE_KEYS, type CaseMilestoneKey } from "@/lib/case-milestones";
 import { collectCaseDeadlines, computeCaseStats, getCasesWithLateDeadlines, type DashboardOverview } from "@/lib/case-deadlines";
 import { validateCaseDates } from "@/lib/case-date-rules";
 import {
@@ -209,7 +209,11 @@ export async function createCase(values: CaseFormValues) {
   return { success: true, id: caseId };
 }
 
-export async function updateCase(id: string, values: CaseFormValues) {
+export async function updateCase(
+  id: string,
+  values: CaseFormValues,
+  milestones?: Record<CaseMilestoneKey, string | null>
+) {
   const auth = await requireCoordinator();
   if ("error" in auth) return { error: auth.error };
 
@@ -228,20 +232,36 @@ export async function updateCase(id: string, values: CaseFormValues) {
 
   const payload = toCasePayload(parsed.data);
 
-  // لا تُعاد الحالة لمفتوحة إذا كانت مرحلة غلق القضية مكتملة
-  if (existingCase?.case_closed_at) {
+  const milestonePayload =
+    milestones !== undefined
+      ? (Object.fromEntries(
+          CASE_MILESTONE_KEYS.map((key) => [key, milestones[key] ?? null])
+        ) as Record<CaseMilestoneKey, string | null>)
+      : null;
+
+  if (milestonePayload) {
+    if (milestonePayload.case_closed_at) {
+      payload.status = "closed";
+    } else if (existingCase?.case_closed_at) {
+      payload.status = "open";
+    }
+  } else if (existingCase?.case_closed_at) {
     payload.status = "closed";
   }
 
+  const updatePayload = milestonePayload
+    ? { ...payload, ...milestonePayload }
+    : payload;
+
   if (existingCase) {
-    const merged = { ...existingCase, ...payload };
+    const merged = { ...existingCase, ...updatePayload };
     const dateError = validateCaseDates(merged);
     if (dateError) {
       return { error: { _form: [dateError] } };
     }
   }
 
-  const { error } = await supabase.from("cases").update(payload).eq("id", id);
+  const { error } = await supabase.from("cases").update(updatePayload).eq("id", id);
 
   if (error) {
     if (error.code === "23505") {
