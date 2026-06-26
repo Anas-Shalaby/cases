@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+import { validateCaseDates, validateScheduleDates } from "@/lib/case-date-rules";
+import type { CaseMilestoneKey } from "@/lib/case-milestones";
+import type { Case } from "@/types/database";
+
 const optionalEmail = z
   .string()
   .email("البريد الإلكتروني غير صالح")
@@ -37,9 +41,47 @@ export const caseFormSchema = z.object({
   coordinator_id: z.string().uuid("يجب اختيار منسق").optional().or(z.literal("")),
   expert_id: z.string().uuid().optional().or(z.literal("")),
   assistant_id: z.string().uuid().optional().or(z.literal("")),
+}).superRefine((data, ctx) => {
+  const scheduleError = validateScheduleDates(data);
+  if (scheduleError) {
+    ctx.addIssue({
+      code: "custom",
+      message: scheduleError.message,
+      path: scheduleError.field ? [scheduleError.field] : ["_form"],
+    });
+  }
 });
 
 export type CaseFormValues = z.infer<typeof caseFormSchema>;
+
+export type CaseFormDateContext = Pick<
+  Case,
+  CaseMilestoneKey | "assignment_date" | "meeting_date" | "initial_report_date" | "final_report_date"
+>;
+
+export function createCaseFormSchema(context?: CaseFormDateContext) {
+  if (!context) return caseFormSchema;
+
+  return caseFormSchema.superRefine((data, ctx) => {
+    const merged: CaseFormDateContext = {
+      ...context,
+      assignment_date: emptyDate(data.assignment_date),
+      meeting_date: emptyDate(data.meeting_date),
+      initial_report_date: emptyDate(data.initial_report_date),
+      final_report_date: emptyDate(data.final_report_date),
+    };
+
+    const dateError = validateCaseDates(merged);
+    if (!dateError) return;
+
+    const scheduleError = validateScheduleDates(data);
+    ctx.addIssue({
+      code: "custom",
+      message: dateError,
+      path: scheduleError?.field ? [scheduleError.field] : ["_form"],
+    });
+  });
+}
 
 export const loginFormSchema = z.object({
   email: z.string().email("البريد الإلكتروني غير صالح"),

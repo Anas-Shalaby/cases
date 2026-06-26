@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition, useState } from "react";
+import { useEffect, useMemo, useTransition, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { ProfileSelect } from "@/components/cases/profile-select";
@@ -27,7 +27,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { CASE_STATUS_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import {
-  caseFormSchema,
+  createCaseFormSchema,
+  type CaseFormDateContext,
   type CaseFormValues,
 } from "@/lib/validations/case";
 import type { Case, Profile } from "@/types/database";
@@ -35,10 +36,15 @@ import type { Case, Profile } from "@/types/database";
 interface CaseFormProps {
   profiles: Pick<Profile, "id" | "full_name" | "role">[];
   initialData?: Case;
+  dateContext?: CaseFormDateContext;
   onSubmit: (
     values: CaseFormValues
   ) => Promise<{ error?: unknown; success?: boolean; id?: string } | void>;
   submitLabel?: string;
+  formId?: string;
+  hideSubmit?: boolean;
+  onValidationChange?: (hasErrors: boolean) => void;
+  onPendingChange?: (isPending: boolean) => void;
 }
 
 const defaultValues: CaseFormValues = {
@@ -84,16 +90,28 @@ function caseToFormValues(caseData: Case): CaseFormValues {
 export function CaseForm({
   profiles,
   initialData,
+  dateContext,
   onSubmit,
   submitLabel = "حفظ القضية",
+  formId = "case-form",
+  hideSubmit = false,
+  onValidationChange,
+  onPendingChange,
 }: CaseFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
+  const schema = useMemo(
+    () => createCaseFormSchema(dateContext),
+    [dateContext]
+  );
+
   const form = useForm<CaseFormValues>({
-    resolver: zodResolver(caseFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: initialData ? caseToFormValues(initialData) : defaultValues,
+    mode: "onChange",
+    reValidateMode: "onChange",
   });
 
   const {
@@ -101,8 +119,28 @@ export function CaseForm({
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    trigger,
+    formState: { errors, isValid },
   } = form;
+
+  useEffect(() => {
+    if (dateContext) {
+      void trigger([
+        "assignment_date",
+        "meeting_date",
+        "initial_report_date",
+        "final_report_date",
+      ]);
+    }
+  }, [dateContext, trigger]);
+
+  useEffect(() => {
+    onValidationChange?.(!isValid);
+  }, [isValid, onValidationChange]);
+
+  useEffect(() => {
+    onPendingChange?.(isPending);
+  }, [isPending, onPendingChange]);
 
   const status = watch("status");
   const coordinatorId = watch("coordinator_id");
@@ -127,6 +165,10 @@ export function CaseForm({
           err._form?.[0] ??
           err.case_number?.[0] ??
           err.case_name?.[0] ??
+          err.assignment_date?.[0] ??
+          err.meeting_date?.[0] ??
+          err.initial_report_date?.[0] ??
+          err.final_report_date?.[0] ??
           err.coordinator_id?.[0] ??
           err.expert_id?.[0] ??
           err.assistant_id?.[0] ??
@@ -142,7 +184,11 @@ export function CaseForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form
+      id={formId}
+      onSubmit={handleSubmit(handleFormSubmit)}
+      className="space-y-6"
+    >
       {formError && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {formError}
@@ -214,10 +260,20 @@ export function CaseForm({
           <div className="space-y-2">
             <Label htmlFor="assignment_date">تاريخ التكليف</Label>
             <Input id="assignment_date" type="date" {...register("assignment_date")} />
+            {errors.assignment_date && (
+              <p className="text-sm text-destructive">
+                {errors.assignment_date.message}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="meeting_date">تاريخ الاجتماع</Label>
             <Input id="meeting_date" type="date" {...register("meeting_date")} />
+            {errors.meeting_date && (
+              <p className="text-sm text-destructive">
+                {errors.meeting_date.message}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="initial_report_date">تاريخ التقرير الأولي</Label>
@@ -226,6 +282,11 @@ export function CaseForm({
               type="date"
               {...register("initial_report_date")}
             />
+            {errors.initial_report_date && (
+              <p className="text-sm text-destructive">
+                {errors.initial_report_date.message}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="final_report_date">تاريخ التقرير النهائي</Label>
@@ -234,6 +295,11 @@ export function CaseForm({
               type="date"
               {...register("final_report_date")}
             />
+            {errors.final_report_date && (
+              <p className="text-sm text-destructive">
+                {errors.final_report_date.message}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -367,14 +433,21 @@ export function CaseForm({
         </CardContent>
       </Card>
 
-      <Separator />
-
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-start">
-        <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
-          {isPending && <Loader2 className="size-4 animate-spin" />}
-          {submitLabel}
-        </Button>
-      </div>
+      {!hideSubmit && (
+        <>
+          <Separator />
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-start">
+            <Button
+              type="submit"
+              disabled={isPending || !isValid}
+              className="w-full sm:w-auto"
+            >
+              {isPending && <Loader2 className="size-4 animate-spin" />}
+              {submitLabel}
+            </Button>
+          </div>
+        </>
+      )}
     </form>
   );
 }

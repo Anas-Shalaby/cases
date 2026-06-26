@@ -1,10 +1,31 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-function redirectToLogin(request: NextRequest) {
+import { isStaleAuthSessionError } from "@/lib/supabase/auth-errors";
+
+function applyCookies(target: NextResponse, source: NextResponse) {
+  source.cookies.getAll().forEach((cookie) => {
+    target.cookies.set(cookie.name, cookie.value);
+  });
+}
+
+function redirectToLogin(request: NextRequest, sourceResponse?: NextResponse) {
   const url = request.nextUrl.clone();
   url.pathname = "/login";
-  return NextResponse.redirect(url);
+  const response = NextResponse.redirect(url);
+  if (sourceResponse) {
+    applyCookies(response, sourceResponse);
+  }
+  return response;
+}
+
+async function clearStaleSession(
+  supabase: ReturnType<typeof createServerClient>,
+  authError: { code?: string; message?: string } | null
+) {
+  if (isStaleAuthSessionError(authError)) {
+    await supabase.auth.signOut();
+  }
 }
 
 export async function updateSession(request: NextRequest) {
@@ -49,20 +70,21 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError) {
+      await clearStaleSession(supabase, authError);
       if (isLoginRoute) {
-        return NextResponse.next();
+        return supabaseResponse;
       }
-      return redirectToLogin(request);
+      return redirectToLogin(request, supabaseResponse);
     }
 
     if (!user) {
       if (isLoginRoute || isOnboardingRoute) {
         if (isOnboardingRoute) {
-          return redirectToLogin(request);
+          return redirectToLogin(request, supabaseResponse);
         }
-        return NextResponse.next();
+        return supabaseResponse;
       }
-      return redirectToLogin(request);
+      return redirectToLogin(request, supabaseResponse);
     }
 
     const { data: profile } = await supabase

@@ -8,6 +8,7 @@ import { requireCoordinator } from "@/lib/auth/require-coordinator";
 import { logActivity } from "@/lib/actions/activity-logs";
 import { CASE_MILESTONE_KEYS } from "@/lib/case-milestones";
 import { collectCaseDeadlines, computeCaseStats, getCasesWithLateDeadlines, type DashboardOverview } from "@/lib/case-deadlines";
+import { validateCaseDates } from "@/lib/case-date-rules";
 import {
   CASE_STATUS_LABELS,
 } from "@/lib/constants";
@@ -221,7 +222,7 @@ export async function updateCase(id: string, values: CaseFormValues) {
 
   const { data: existingCase } = await supabase
     .from("cases")
-    .select("case_number, case_name, status, case_closed_at")
+    .select("*")
     .eq("id", id)
     .single();
 
@@ -230,6 +231,14 @@ export async function updateCase(id: string, values: CaseFormValues) {
   // لا تُعاد الحالة لمفتوحة إذا كانت مرحلة غلق القضية مكتملة
   if (existingCase?.case_closed_at) {
     payload.status = "closed";
+  }
+
+  if (existingCase) {
+    const merged = { ...existingCase, ...payload };
+    const dateError = validateCaseDates(merged);
+    if (dateError) {
+      return { error: { _form: [dateError] } };
+    }
   }
 
   const { error } = await supabase.from("cases").update(payload).eq("id", id);
@@ -265,6 +274,7 @@ export async function updateCase(id: string, values: CaseFormValues) {
   revalidatePath("/cases");
   revalidatePath(`/cases/${id}`);
   revalidatePath("/activity-logs");
+  revalidatePath("/reports");
   return { success: true, id };
 }
 

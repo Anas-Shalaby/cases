@@ -15,6 +15,10 @@ export async function login(values: LoginFormValues) {
   }
 
   const supabase = await createClient();
+
+  // مسح جلسة منتهية قبل محاولة تسجيل دخول جديدة
+  await supabase.auth.signOut();
+
   const { error } = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,

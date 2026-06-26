@@ -2,17 +2,18 @@
 
 import { useMemo, useState } from "react";
 import {
+  AlertTriangle,
   Briefcase,
   CheckCircle2,
   Clock,
   FolderOpen,
-  AlertTriangle,
 } from "lucide-react";
 
 import { ExportCasesButtons } from "@/components/cases/export-cases-buttons";
 import { CasesDataTable } from "@/components/cases/cases-data-table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,60 +22,145 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  AR_MONTHS,
-  buildMonthlyReport,
-  formatReportPeriod,
+  buildPeriodReport,
+  defaultPeriodRange,
 } from "@/lib/monthly-reports";
-import type { CaseWithRelations, Profile } from "@/types/database";
+import { USER_ROLE_LABELS } from "@/lib/constants";
+import type { CaseWithRelations, UserRole } from "@/types/database";
+
+interface TeamMemberOption {
+  id: string;
+  full_name: string;
+}
 
 interface MonthlyReportsPanelProps {
   cases: CaseWithRelations[];
-  experts: Pick<Profile, "id" | "full_name">[];
+  coordinators: TeamMemberOption[];
+  experts: TeamMemberOption[];
+  assistants: TeamMemberOption[];
   isCoordinator: boolean;
-  currentUserId?: string;
+  currentRole: UserRole;
+  currentUserId: string;
+  currentUserName: string;
+}
+
+function TeamFilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+  allLabel,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: TeamMemberOption[];
+  allLabel: string;
+  disabled?: boolean;
+}) {
+  const selected = options.find((o) => o.id === value);
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium">{label}</label>
+      <Select value={value} onValueChange={(v) => onChange(v ?? "all")} disabled={disabled}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={allLabel}>
+            {value === "all" ? allLabel : (selected?.full_name ?? allLabel)}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">{allLabel}</SelectItem>
+          {options.map((member) => (
+            <SelectItem key={member.id} value={member.id}>
+              {member.full_name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 }
 
 export function MonthlyReportsPanel({
   cases,
+  coordinators,
   experts,
+  assistants,
   isCoordinator,
+  currentRole,
   currentUserId,
+  currentUserName,
 }: MonthlyReportsPanelProps) {
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const initialRange = defaultPeriodRange();
+  const [dateFrom, setDateFrom] = useState(initialRange.from);
+  const [dateTo, setDateTo] = useState(initialRange.to);
+  const [coordinatorId, setCoordinatorId] = useState("all");
   const [expertId, setExpertId] = useState(
-    isCoordinator ? "all" : (currentUserId ?? "all")
+    currentRole === "expert" ? currentUserId : "all"
+  );
+  const [assistantId, setAssistantId] = useState(
+    currentRole === "assistant" ? currentUserId : "all"
   );
 
-  const yearOptions = useMemo(() => {
-    const years = new Set<number>([now.getFullYear()]);
-    for (const c of cases) {
-      years.add(parseInt(c.created_at.slice(0, 4), 10));
-      if (c.case_closed_at) {
-        years.add(parseInt(c.case_closed_at.slice(0, 4), 10));
-      }
-    }
-    return Array.from(years).sort((a, b) => b - a);
-  }, [cases, now]);
-
-  const effectiveExpertId =
-    !isCoordinator && currentUserId
-      ? currentUserId
-      : expertId === "all"
-        ? undefined
-        : expertId;
+  const filters = useMemo(
+    () => ({
+      coordinatorId:
+        isCoordinator && coordinatorId !== "all" ? coordinatorId : undefined,
+      expertId:
+        currentRole === "expert"
+          ? currentUserId
+          : isCoordinator && expertId !== "all"
+            ? expertId
+            : undefined,
+      assistantId:
+        currentRole === "assistant"
+          ? currentUserId
+          : isCoordinator && assistantId !== "all"
+            ? assistantId
+            : undefined,
+    }),
+    [
+      isCoordinator,
+      coordinatorId,
+      expertId,
+      assistantId,
+      currentRole,
+      currentUserId,
+    ]
+  );
 
   const report = useMemo(
-    () => buildMonthlyReport(cases, year, month, effectiveExpertId),
-    [cases, year, month, effectiveExpertId]
+    () => buildPeriodReport(cases, dateFrom, dateTo, filters),
+    [cases, dateFrom, dateTo, filters]
   );
 
-  const periodLabel = formatReportPeriod(year, month);
+  const invalidRange = dateFrom > dateTo;
+
+  const coordinatorName =
+    coordinatorId !== "all"
+      ? coordinators.find((m) => m.id === coordinatorId)?.full_name
+      : undefined;
+  const expertFilterName =
+    currentRole === "expert"
+      ? currentUserName
+      : expertId !== "all"
+        ? experts.find((m) => m.id === expertId)?.full_name
+        : undefined;
+  const assistantFilterName =
+    currentRole === "assistant"
+      ? currentUserName
+      : assistantId !== "all"
+        ? assistants.find((m) => m.id === assistantId)?.full_name
+        : undefined;
+
+  const exportLabel =
+    expertFilterName ?? coordinatorName ?? assistantFilterName;
 
   const statCards = [
     {
-      label: "قضايا الشهر",
+      label: "قضايا الفترة",
       value: report.cases.length,
       icon: Briefcase,
       color: "text-blue-600 bg-blue-50 dark:bg-blue-950 dark:text-blue-400",
@@ -103,86 +189,107 @@ export function MonthlyReportsPanel({
   return (
     <div className="space-y-6">
       <Card>
-        <CardContent className="flex flex-col gap-4 pt-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className="flex flex-col gap-4 pt-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             <div className="space-y-2">
-              <label className="text-sm font-medium">السنة</label>
-              <Select
-                value={String(year)}
-                onValueChange={(v) => setYear(Number(v ?? year))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {yearOptions.map((y) => (
-                    <SelectItem key={y} value={String(y)}>
-                      {y}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium">من تاريخ</label>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                dir="ltr"
+              />
             </div>
-
             <div className="space-y-2">
-              <label className="text-sm font-medium">الشهر</label>
-              <Select
-                value={String(month)}
-                onValueChange={(v) => setMonth(Number(v ?? month))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue>{AR_MONTHS[month - 1]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {AR_MONTHS.map((label, index) => (
-                    <SelectItem key={label} value={String(index + 1)}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium">إلى تاريخ</label>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                dir="ltr"
+              />
             </div>
 
             {isCoordinator && (
-              <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+              <>
+                <TeamFilterSelect
+                  label={USER_ROLE_LABELS.coordinator}
+                  value={coordinatorId}
+                  onChange={setCoordinatorId}
+                  options={coordinators}
+                  allLabel="كل المنسقين"
+                />
+                <TeamFilterSelect
+                  label={USER_ROLE_LABELS.expert}
+                  value={expertId}
+                  onChange={setExpertId}
+                  options={experts}
+                  allLabel="كل الخبراء"
+                />
+                <TeamFilterSelect
+                  label={USER_ROLE_LABELS.assistant}
+                  value={assistantId}
+                  onChange={setAssistantId}
+                  options={assistants}
+                  allLabel="كل مساعدي الخبراء"
+                />
+              </>
+            )}
+
+            {currentRole === "expert" && !isCoordinator && (
+              <div className="space-y-2 sm:col-span-2">
                 <label className="text-sm font-medium">الخبير</label>
-                <Select value={expertId} onValueChange={(v) => setExpertId(v ?? "all")}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="كل الخبراء" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">كل الخبراء</SelectItem>
-                    {experts.map((expert) => (
-                      <SelectItem key={expert.id} value={expert.id}>
-                        {expert.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input value={currentUserName} disabled readOnly />
+              </div>
+            )}
+
+            {currentRole === "assistant" && !isCoordinator && (
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-sm font-medium">مساعد الخبير</label>
+                <Input value={currentUserName} disabled readOnly />
               </div>
             )}
           </div>
 
-          <ExportCasesButtons
-            cases={report.cases}
-            expertName={report.expertName}
-            periodLabel={periodLabel}
-          />
+          {invalidRange && (
+            <p className="text-sm text-destructive">
+              تاريخ «من» يجب أن يكون قبل أو يساوي تاريخ «إلى»
+            </p>
+          )}
+
+          <div className="flex justify-end">
+            <ExportCasesButtons
+              cases={report.cases}
+              expertName={exportLabel}
+              periodLabel={report.periodLabel}
+              disabled={invalidRange}
+            />
+          </div>
         </CardContent>
       </Card>
 
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="outline" className="text-sm">
-          {periodLabel}
+          {report.periodLabel}
         </Badge>
-        {report.expertName && (
+        {coordinatorName && (
           <Badge variant="secondary" className="text-sm">
-            الخبير: {report.expertName}
+            المنسق: {coordinatorName}
+          </Badge>
+        )}
+        {expertFilterName && (
+          <Badge variant="secondary" className="text-sm">
+            الخبير: {expertFilterName}
+          </Badge>
+        )}
+        {assistantFilterName && (
+          <Badge variant="secondary" className="text-sm">
+            مساعد الخبير: {assistantFilterName}
           </Badge>
         )}
       </div>
 
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {statCards.map(({ label, value, icon: Icon, color }) => (
           <Card key={label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -203,7 +310,7 @@ export function MonthlyReportsPanel({
           <CardTitle className="flex items-center justify-between text-base">
             <span className="flex items-center gap-2">
               <Clock className="size-4" />
-              قضايا التقرير الشهري
+              قضايا التقرير
             </span>
             <span className="text-muted-foreground text-sm font-normal">
               {report.cases.length} قضية
@@ -211,9 +318,13 @@ export function MonthlyReportsPanel({
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
-          {report.cases.length === 0 ? (
+          {invalidRange ? (
             <p className="text-muted-foreground py-16 text-center text-sm">
-              لا توجد قضايا في هذا الشهر للمعايير المحددة
+              صحّح نطاق التاريخ لعرض التقرير
+            </p>
+          ) : report.cases.length === 0 ? (
+            <p className="text-muted-foreground py-16 text-center text-sm">
+              لا توجد قضايا في هذه الفترة للمعايير المحددة
             </p>
           ) : (
             <CasesDataTable cases={report.cases} canEdit={isCoordinator} />

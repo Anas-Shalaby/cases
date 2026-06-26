@@ -7,6 +7,10 @@ import {
   toggleCaseMilestone,
   updateCaseMilestoneDate,
 } from "@/lib/actions/case-milestones";
+import {
+  buildMilestoneStateAfterUpdate,
+  validateMilestoneDate,
+} from "@/lib/case-date-rules";
 import { CASE_MILESTONES, type CaseMilestoneKey } from "@/lib/case-milestones";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -29,6 +33,8 @@ interface CaseMilestonesPanelProps {
     caseClosedAt: string | null;
     status: CaseStatus;
   }) => void;
+  onMilestoneDateChange?: (key: CaseMilestoneKey, value: string | null) => void;
+  onValidationChange?: (hasErrors: boolean) => void;
 }
 
 function todayDateString() {
@@ -51,19 +57,62 @@ export function CaseMilestonesPanel({
   readOnly = false,
   onStatusChange,
   onCloseMilestoneChange,
+  onMilestoneDateChange,
+  onValidationChange,
 }: CaseMilestonesPanelProps) {
   const [dates, setDates] = useState(() => buildMilestoneState(caseData));
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<CaseMilestoneKey, string>>
+  >({});
   const [isPending, startTransition] = useTransition();
   const [pendingKey, setPendingKey] = useState<CaseMilestoneKey | null>(null);
+
+  function clearFieldError(key: CaseMilestoneKey) {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      onValidationChange?.(Object.keys(next).length > 0);
+      return next;
+    });
+  }
+
+  function setFieldError(key: CaseMilestoneKey, message: string) {
+    setFieldErrors((prev) => {
+      const next = { ...prev, [key]: message };
+      onValidationChange?.(true);
+      return next;
+    });
+  }
+
+  function validateMilestoneLocally(
+    key: CaseMilestoneKey,
+    date: string
+  ): string | null {
+    const nextState = buildMilestoneStateAfterUpdate(
+      { ...caseData, ...dates },
+      key,
+      date
+    );
+    return validateMilestoneDate(nextState, key, date);
+  }
 
   function handleToggle(key: CaseMilestoneKey, checked: boolean) {
     if (readOnly) return;
 
-    setError(null);
+    clearFieldError(key);
     setPendingKey(key);
 
     const dateToSave = checked ? (dates[key] ?? todayDateString()) : null;
+
+    if (checked && dateToSave) {
+      const validationError = validateMilestoneLocally(key, dateToSave);
+      if (validationError) {
+        setFieldError(key, validationError);
+        setPendingKey(null);
+        return;
+      }
+    }
 
     if (checked && !dates[key]) {
       setDates((prev) => ({ ...prev, [key]: dateToSave }));
@@ -79,13 +128,14 @@ export function CaseMilestonesPanel({
       setPendingKey(null);
 
       if (result.error) {
-        setError(result.error);
+        setFieldError(key, result.error);
         setDates(buildMilestoneState(caseData));
         return;
       }
 
       if (result.success) {
         setDates((prev) => ({ ...prev, [key]: result.date }));
+        onMilestoneDateChange?.(key, result.date);
 
         if (key === "case_closed_at" && result.status) {
           onStatusChange?.(result.status);
@@ -99,32 +149,48 @@ export function CaseMilestonesPanel({
   }
 
   function handleDateChange(key: CaseMilestoneKey, value: string) {
+    clearFieldError(key);
     setDates((prev) => ({ ...prev, [key]: value || null }));
   }
 
   function handleDateBlur(key: CaseMilestoneKey) {
     if (readOnly || !dates[key]) return;
 
-    setError(null);
+    const dateValue = dates[key]!;
+    const validationError = validateMilestoneLocally(key, dateValue);
+
+    if (validationError) {
+      setFieldError(key, validationError);
+      setDates((prev) => ({
+        ...prev,
+        [key]: caseData[key] ?? null,
+      }));
+      return;
+    }
+
+    if (dateValue === (caseData[key] ?? null)) return;
+
     setPendingKey(key);
 
     startTransition(async () => {
-      const result = await updateCaseMilestoneDate(caseId, key, dates[key]!);
+      const result = await updateCaseMilestoneDate(caseId, key, dateValue);
       setPendingKey(null);
 
       if (result.error) {
-        setError(result.error);
+        setFieldError(key, result.error);
         setDates(buildMilestoneState(caseData));
         return;
       }
 
       if (result.success) {
         setDates((prev) => ({ ...prev, [key]: result.date }));
+        onMilestoneDateChange?.(key, result.date);
       }
     });
   }
 
   const completedCount = CASE_MILESTONES.filter(({ key }) => dates[key]).length;
+  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
 
   return (
     <Card>
@@ -137,9 +203,9 @@ export function CaseMilestonesPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-1">
-        {error && (
+        {hasFieldErrors && (
           <div className="mb-3 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
+            صحّح تواريخ المراحل غير الصالحة قبل حفظ التعديلات
           </div>
         )}
 
@@ -147,6 +213,7 @@ export function CaseMilestonesPanel({
           {CASE_MILESTONES.map(({ key, label }) => {
             const isDone = !!dates[key];
             const isLoading = isPending && pendingKey === key;
+            const fieldError = fieldErrors[key];
 
             return (
               <li
@@ -154,7 +221,8 @@ export function CaseMilestonesPanel({
                 className={cn(
                   "flex items-start gap-3 px-4 py-3 transition-colors sm:items-center sm:gap-4",
                   isDone && "bg-emerald-50/50 dark:bg-emerald-950/20",
-                  isLoading && "opacity-60"
+                  isLoading && "opacity-60",
+                  fieldError && "bg-destructive/5"
                 )}
               >
                 {readOnly ? (
@@ -175,14 +243,19 @@ export function CaseMilestonesPanel({
                 )}
 
                 <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                  <span
-                    className={cn(
-                      "text-sm font-medium leading-snug",
-                      isDone && "text-emerald-800 dark:text-emerald-300"
+                  <div className="min-w-0">
+                    <span
+                      className={cn(
+                        "text-sm font-medium leading-snug",
+                        isDone && "text-emerald-800 dark:text-emerald-300"
+                      )}
+                    >
+                      {label}
+                    </span>
+                    {fieldError && (
+                      <p className="text-destructive mt-1 text-xs">{fieldError}</p>
                     )}
-                  >
-                    {label}
-                  </span>
+                  </div>
 
                   {readOnly ? (
                     isDone ? (
@@ -201,7 +274,11 @@ export function CaseMilestonesPanel({
                       disabled={isPending}
                       onChange={(e) => handleDateChange(key, e.target.value)}
                       onBlur={() => handleDateBlur(key)}
-                      className="h-8 w-full max-w-[160px] text-xs sm:shrink-0"
+                      aria-invalid={!!fieldError}
+                      className={cn(
+                        "h-8 w-full max-w-[160px] text-xs sm:shrink-0",
+                        fieldError && "border-destructive"
+                      )}
                       dir="ltr"
                     />
                   ) : (
