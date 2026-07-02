@@ -1,6 +1,5 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 
@@ -138,10 +137,9 @@ export function CaseEditPanels({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={isPending}
+          loading={isPending}
           className="w-full sm:w-auto"
         >
-          {isPending && <Loader2 className="size-4 animate-spin" />}
           حفظ التعديلات
         </Button>
       </div>

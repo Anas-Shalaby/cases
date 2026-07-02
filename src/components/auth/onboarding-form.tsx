@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
@@ -70,6 +70,7 @@ export function OnboardingForm() {
               id="full_name"
               placeholder="مثال: أحمد محمد العلي"
               autoFocus
+              disabled={isPending}
               {...register("full_name")}
             />
             {errors.full_name && (
@@ -78,8 +79,7 @@ export function OnboardingForm() {
               </p>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin" />}
+          <Button type="submit" className="w-full" loading={isPending}>
             متابعة إلى لوحة التحكم
           </Button>
         </form>

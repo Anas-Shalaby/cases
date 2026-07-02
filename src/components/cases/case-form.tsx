@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   forwardRef,
@@ -432,10 +431,10 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-start">
             <Button
               type="submit"
-              disabled={isPending || (validateOnChange && !isValid)}
+              loading={isPending}
+              disabled={validateOnChange && !isValid}
               className="w-full sm:w-auto"
             >
-              {isPending && <Loader2 className="size-4 animate-spin" />}
               {submitLabel}
             </Button>
           </div>

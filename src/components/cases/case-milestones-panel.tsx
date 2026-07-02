@@ -5,7 +5,7 @@ import {
   useImperativeHandle,
   useState,
 } from "react";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 import {
   toggleCaseMilestone,
@@ -279,14 +279,19 @@ export const CaseMilestonesPanel = forwardRef<
                     <Circle className="text-muted-foreground size-5 shrink-0" />
                   )
                 ) : (
-                  <Checkbox
-                    checked={isDone}
-                    disabled={isPending}
-                    onCheckedChange={(checked) =>
-                      handleToggle(key, checked === true)
-                    }
-                    aria-label={label}
-                  />
+                  <div className="relative shrink-0">
+                    <Checkbox
+                      checked={isDone}
+                      disabled={isPending}
+                      onCheckedChange={(checked) =>
+                        handleToggle(key, checked === true)
+                      }
+                      aria-label={label}
+                    />
+                    {isLoading && (
+                      <Loader2 className="text-primary pointer-events-none absolute inset-0 m-auto size-4 animate-spin" />
+                    )}
+                  </div>
                 )}
 
                 <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">

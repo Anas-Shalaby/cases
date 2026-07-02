@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -223,8 +223,7 @@ export function EditTeamMemberDialog({ member }: EditTeamMemberDialogProps) {
             >
               إلغاء
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="size-4 animate-spin" />}
+            <Button type="submit" loading={isPending}>
               {isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
             </Button>
           </DialogFooter>

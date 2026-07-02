@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   AlertTriangle,
   CalendarClock,
@@ -8,7 +7,7 @@ import {
 
 import { CasesTable } from "@/components/cases/cases-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { NavButton, NavLink } from "@/components/ui/nav-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DEADLINE_LABELS, formatDeadlineUrgency, type DashboardOverview } from "@/lib/case-deadlines";
 import { formatDate } from "@/lib/utils";
@@ -62,14 +61,14 @@ export function DashboardInsights({
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{teamCount}</div>
-              <Button
+              <NavButton
                 variant="link"
                 size="sm"
                 className="h-auto p-0 text-xs"
-                render={<Link href="/users" />}
+                href="/users"
               >
                 إدارة الفريق
-              </Button>
+              </NavButton>
             </CardContent>
           </Card>
         )}
@@ -88,9 +87,9 @@ export function DashboardInsights({
                 </Badge>
               )}
             </CardTitle>
-            <Button variant="outline" size="sm" render={<Link href="/cases?status=delayed" />}>
+            <NavButton variant="outline" size="sm" href="/cases?status=delayed">
               عرض الكل
-            </Button>
+            </NavButton>
           </CardHeader>
           <CardContent className="pt-0">
             {delayedCases.length === 0 ? (
@@ -130,12 +129,12 @@ export function DashboardInsights({
                     className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <Link
+                      <NavLink
                         href={`/cases/${d.caseId}`}
                         className="font-medium hover:text-primary hover:underline"
                       >
                         {d.caseName}
-                      </Link>
+                      </NavLink>
                       <p className="text-muted-foreground text-xs" dir="ltr">
                         {d.caseNumber}
                       </p>
@@ -180,12 +179,12 @@ export function DashboardInsights({
                   className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
-                    <Link
+                    <NavLink
                       href={`/cases/${d.caseId}`}
                       className="font-medium hover:text-primary hover:underline"
                     >
                       {d.caseName}
-                    </Link>
+                    </NavLink>
                     <p className="text-muted-foreground text-xs" dir="ltr">
                       {d.caseNumber}
                     </p>

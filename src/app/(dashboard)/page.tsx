@@ -1,10 +1,8 @@
-import Link from "next/link";
-
 import { CasesTable } from "@/components/cases/cases-table";
 import { DashboardInsights } from "@/components/dashboard/dashboard-insights";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { CoordinatorAlertsBanner } from "@/components/notifications/coordinator-alerts-banner";
-import { Button } from "@/components/ui/button";
+import { NavButton } from "@/components/ui/nav-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCases, getDashboardOverview } from "@/lib/actions/cases";
 import { getCurrentProfile } from "@/lib/actions/profile";
@@ -38,9 +36,9 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>أحدث القضايا</CardTitle>
-          <Button variant="outline" size="sm" render={<Link href="/cases" />}>
+          <NavButton variant="outline" size="sm" href="/cases">
             عرض الكل
-          </Button>
+          </NavButton>
         </CardHeader>
         <CardContent className="pt-0">
           <CasesTable cases={recentCases} canEdit={isCoordinator} />

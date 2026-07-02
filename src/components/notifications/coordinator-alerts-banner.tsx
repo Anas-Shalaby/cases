@@ -1,9 +1,8 @@
-import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Bell } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Bell } from "lucide-react";
 
-import { getNotifications } from "@/lib/actions/notifications";
-import { Button } from "@/components/ui/button";
+import { NavButton } from "@/components/ui/nav-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getNotifications } from "@/lib/actions/notifications";
 
 export async function CoordinatorAlertsBanner() {
   const notifications = await getNotifications(10, { syncDeadlines: false });
@@ -44,15 +43,15 @@ export async function CoordinatorAlertsBanner() {
             بالمواعيد
           </p>
         )}
-        <Button
+        <NavButton
           variant="outline"
           size="sm"
           className="border-amber-300 bg-background"
-          render={<Link href="/notifications" />}
+          href="/notifications"
         >
           <ArrowLeft className="size-4" />
           عرض كل التنبيهات
-        </Button>
+        </NavButton>
       </CardContent>
     </Card>
   );

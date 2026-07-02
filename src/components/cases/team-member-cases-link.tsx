@@ -1,5 +1,6 @@
-import Link from "next/link";
+"use client";
 
+import { NavLink } from "@/components/ui/nav-button";
 import { cn } from "@/lib/utils";
 
 interface TeamMemberCasesLinkProps {
@@ -24,10 +25,11 @@ export function TeamMemberCasesLink({
   }
 
   const param = role === "expert" ? "expert" : "assistant";
+  const href = `/cases?${param}=${memberId}`;
 
   return (
-    <Link
-      href={`/cases?${param}=${memberId}`}
+    <NavLink
+      href={href}
       className={cn(
         "font-medium hover:text-primary hover:underline",
         muted && "text-muted-foreground hover:text-primary",
@@ -36,6 +38,6 @@ export function TeamMemberCasesLink({
       title={`عرض قضايا ${display}`}
     >
       {display}
-    </Link>
+    </NavLink>
   );
 }

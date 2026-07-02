@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -43,8 +43,13 @@ export function DeleteTeamMemberButton({
     });
   }
 
+  function handleOpenChange(next: boolean) {
+    if (isPending) return;
+    setOpen(next);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
           <Button
@@ -52,6 +57,7 @@ export function DeleteTeamMemberButton({
             size="icon-xs"
             className="text-destructive hover:text-destructive"
             title="حذف"
+            disabled={isPending}
           >
             <Trash2 className="size-3.5" />
           </Button>
@@ -71,15 +77,14 @@ export function DeleteTeamMemberButton({
           </div>
         )}
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button
+            variant="outline"
+            disabled={isPending}
+            onClick={() => setOpen(false)}
+          >
             إلغاء
           </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isPending}
-          >
-            {isPending && <Loader2 className="size-4 animate-spin" />}
+          <Button variant="destructive" onClick={handleDelete} loading={isPending}>
             تأكيد الحذف
           </Button>
         </DialogFooter>

@@ -1,6 +1,6 @@
 "use client";
 
-import { FileSpreadsheet, FileText, Loader2 } from "lucide-react";
+import { FileSpreadsheet, FileText } from "lucide-react";
 import { useState } from "react";
 
 import { downloadCasesExcel } from "@/lib/export-cases-excel";
@@ -90,13 +90,10 @@ export function ExportCasesButtons({
         variant="outline"
         size={size}
         disabled={isDisabled}
+        loading={loading === "excel"}
         onClick={handleExcel}
       >
-        {loading === "excel" ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <FileSpreadsheet className="size-4" />
-        )}
+        <FileSpreadsheet className="size-4" />
         Excel
       </Button>
       <Button
@@ -104,13 +101,10 @@ export function ExportCasesButtons({
         variant="outline"
         size={size}
         disabled={isDisabled}
+        loading={loading === "word"}
         onClick={handleWord}
       >
-        {loading === "word" ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <FileText className="size-4" />
-        )}
+        <FileText className="size-4" />
         Word
       </Button>
     </div>

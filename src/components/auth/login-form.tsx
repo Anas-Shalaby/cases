@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Scale } from "lucide-react";
+import { Scale } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
@@ -64,6 +64,7 @@ export function LoginForm() {
               type="email"
               dir="ltr"
               placeholder="email@example.com"
+              disabled={isPending}
               {...register("email")}
             />
             {errors.email && (
@@ -76,6 +77,7 @@ export function LoginForm() {
               id="password"
               type="password"
               dir="ltr"
+              disabled={isPending}
               {...register("password")}
             />
             {errors.password && (
@@ -84,8 +86,7 @@ export function LoginForm() {
               </p>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin" />}
+          <Button type="submit" className="w-full" loading={isPending}>
             دخول
           </Button>
         </form>

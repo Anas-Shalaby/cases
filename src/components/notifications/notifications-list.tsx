@@ -58,7 +58,7 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
           <Button
             variant="outline"
             size="sm"
-            disabled={isPending}
+            loading={isPending}
             onClick={handleMarkAllRead}
             className="w-full sm:w-auto"
           >

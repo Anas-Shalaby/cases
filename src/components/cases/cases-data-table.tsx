@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Eye, MoreHorizontal, Pencil } from "lucide-react";
 
@@ -86,6 +88,17 @@ export function CasesDataTable({
   emptyMessage = "لا توجد قضايا لعرضها",
   canEdit = false,
 }: CasesDataTableProps) {
+  const router = useRouter();
+  const [isNavigating, startNavigation] = useTransition();
+  const [navigatingCaseId, setNavigatingCaseId] = useState<string | null>(null);
+
+  function navigateTo(href: string, caseId: string) {
+    setNavigatingCaseId(caseId);
+    startNavigation(() => {
+      router.push(href);
+    });
+  }
+
   if (cases.length === 0) {
     return (
       <div className="text-muted-foreground flex items-center justify-center py-16 text-sm">
@@ -119,7 +132,13 @@ export function CasesDataTable({
       </TableHeader>
       <TableBody>
         {cases.map((caseItem) => (
-          <TableRow key={caseItem.id} className="group">
+          <TableRow
+            key={caseItem.id}
+            className={cn(
+              "group",
+              isNavigating && navigatingCaseId === caseItem.id && "opacity-70"
+            )}
+          >
             <TableCell className="sticky right-0 z-10 bg-card group-hover:bg-muted/50 align-top">
               <Link
                 href={`/cases/${caseItem.id}`}
@@ -196,7 +215,13 @@ export function CasesDataTable({
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
-                    <Button className={'cursor-pointer'} variant="ghost" size="icon-sm">
+                    <Button
+                      className="cursor-pointer"
+                      variant="ghost"
+                      size="icon-sm"
+                      loading={isNavigating && navigatingCaseId === caseItem.id}
+                      disabled={isNavigating}
+                    >
                       <MoreHorizontal className="size-4" />
                       <span className="sr-only">فتح القائمة</span>
                     </Button>
@@ -204,14 +229,16 @@ export function CasesDataTable({
                 />
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem
-                    render={<Link href={`/cases/${caseItem.id}`} />}
+                    onClick={() => navigateTo(`/cases/${caseItem.id}`, caseItem.id)}
                   >
                     <Eye className="size-4" />
                     عرض التفاصيل
                   </DropdownMenuItem>
                   {canEdit && (
                     <DropdownMenuItem
-                      render={<Link href={`/cases/${caseItem.id}/edit`} />}
+                      onClick={() =>
+                        navigateTo(`/cases/${caseItem.id}/edit`, caseItem.id)
+                      }
                     >
                       <Pencil className="size-4" />
                       تعديل القضية

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
@@ -77,7 +77,7 @@ export function ProfileSettingsForm({ profile }: ProfileSettingsFormProps) {
           )}
           <div className="space-y-2">
             <Label htmlFor="full_name">الاسم الكامل</Label>
-            <Input id="full_name" {...register("full_name")} />
+            <Input id="full_name" disabled={isPending} {...register("full_name")} />
             {errors.full_name && (
               <p className="text-sm text-destructive">
                 {errors.full_name.message}
@@ -95,8 +95,7 @@ export function ProfileSettingsForm({ profile }: ProfileSettingsFormProps) {
               يتم تعيين الدور من قبل مدير النظام
             </p>
           </div>
-          <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin" />}
+          <Button type="submit" loading={isPending}>
             حفظ التغييرات
           </Button>
         </form>

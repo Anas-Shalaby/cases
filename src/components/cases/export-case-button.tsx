@@ -1,6 +1,6 @@
 "use client";
 
-import { FileSpreadsheet, Loader2 } from "lucide-react";
+import { FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -34,14 +34,11 @@ export function ExportCaseButton({
       type="button"
       variant="outline"
       size={size}
+      loading={loading}
       disabled={loading}
       onClick={handleExport}
     >
-      {loading ? (
-        <Loader2 className="size-4 animate-spin" />
-      ) : (
-        <FileSpreadsheet className="size-4" />
-      )}
+      {loading ? null : <FileSpreadsheet className="size-4" />}
       تصدير Excel
     </Button>
   );

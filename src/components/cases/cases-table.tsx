@@ -1,9 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Eye, Pencil } from "lucide-react";
 
 import { CaseMobileCard } from "@/components/cases/case-mobile-card";
 import { StatusBadge } from "@/components/cases/status-badge";
-import { Button } from "@/components/ui/button";
+import { NavButton } from "@/components/ui/nav-button";
 import {
   Table,
   TableBody,
@@ -89,21 +91,21 @@ export function CasesTable({ cases, className, canEdit = false }: CasesTableProp
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-0.5">
-                  <Button
+                  <NavButton
+                    href={`/cases/${caseItem.id}`}
                     variant="ghost"
                     size="icon-xs"
-                    render={<Link href={`/cases/${caseItem.id}`} />}
                   >
                     <Eye className="size-3.5" />
-                  </Button>
+                  </NavButton>
                   {canEdit && (
-                    <Button
+                    <NavButton
+                      href={`/cases/${caseItem.id}/edit`}
                       variant="ghost"
                       size="icon-xs"
-                      render={<Link href={`/cases/${caseItem.id}/edit`} />}
                     >
                       <Pencil className="size-3.5" />
-                    </Button>
+                    </NavButton>
                   )}
                 </div>
               </TableCell>

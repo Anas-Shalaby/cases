@@ -1,7 +1,4 @@
-import Link from "next/link";
-import { Plus } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { NewCaseButton } from "@/components/cases/new-case-button";
 
 interface DashboardHeaderProps {
   title: string;
@@ -25,10 +22,7 @@ export function DashboardHeader({
         )}
       </div>
       {showNewCase && (
-        <Button className="w-full shrink-0 sm:w-auto" render={<Link href="/cases/new" />}>
-          <Plus className="size-4" />
-          قضية جديدة
-        </Button>
+        <NewCaseButton className="w-full shrink-0 sm:w-auto" />
       )}
     </div>
   );

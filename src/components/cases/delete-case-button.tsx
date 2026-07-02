@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { deleteCase } from "@/lib/actions/cases";
@@ -29,11 +29,20 @@ export function DeleteCaseButton({ caseId }: DeleteCaseButtonProps) {
     });
   }
 
+  function handleOpenChange(next: boolean) {
+    if (isPending) return;
+    setOpen(next);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
-          <Button variant="destructive" className="flex-1 sm:flex-none">
+          <Button
+            variant="destructive"
+            className="flex-1 sm:flex-none"
+            disabled={isPending}
+          >
             <Trash2 className="size-4" />
             حذف
           </Button>
@@ -47,11 +56,14 @@ export function DeleteCaseButton({ caseId }: DeleteCaseButtonProps) {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button
+            variant="outline"
+            disabled={isPending}
+            onClick={() => setOpen(false)}
+          >
             إلغاء
           </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin" />}
+          <Button variant="destructive" onClick={handleDelete} loading={isPending}>
             تأكيد الحذف
           </Button>
         </DialogFooter>

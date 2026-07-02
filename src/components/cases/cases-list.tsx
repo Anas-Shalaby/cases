@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Briefcase, Search, X } from "lucide-react";
 
 import { CaseMobileCard } from "@/components/cases/case-mobile-card";
 import { CasesDataTable } from "@/components/cases/cases-data-table";
 import { ExportCasesButtons } from "@/components/cases/export-cases-buttons";
+import { NewCaseButton } from "@/components/cases/new-case-button";
 import { Button } from "@/components/ui/button";
+import { NavButton } from "@/components/ui/nav-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { CASE_STATUS_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
@@ -103,9 +104,7 @@ export function CasesList({
             ابدأ بإضافة أول قضية لتتبع الأطراف والمواعيد وفريق العمل
           </p>
           {isCoordinator && (
-            <Button className="mt-6" render={<Link href="/cases/new" />}>
-              إضافة قضية جديدة
-            </Button>
+            <NewCaseButton className="mt-6" />
           )}
         </CardContent>
       </Card>
@@ -127,10 +126,10 @@ export function CasesList({
               </span>
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" render={<Link href="/cases" />}>
+              <NavButton variant="outline" size="sm" href="/cases">
                 <X className="size-4" />
                 إلغاء التصفية
-              </Button>
+              </NavButton>
               {memberFilterRole === "expert" && (
                 <ExportCasesButtons
                   cases={filteredCases}

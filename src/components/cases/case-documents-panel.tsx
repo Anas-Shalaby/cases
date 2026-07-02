@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Download, FileText, Loader2, Plus, Trash2 } from "lucide-react";
+import { Download, FileText, Plus, Trash2 } from "lucide-react";
 
 import {
   addCaseDocument,
@@ -35,6 +35,8 @@ export function CaseDocumentsPanel({
 }: CaseDocumentsPanelProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -56,18 +58,28 @@ export function CaseDocumentsPanel({
   }
 
   function handleDelete(documentId: string) {
+    setDeletingId(documentId);
     startTransition(async () => {
       const result = await deleteCaseDocument(documentId, caseId);
       if (result.error) setError(result.error);
       else router.refresh();
+      setDeletingId(null);
     });
   }
 
-  async function handleDownload(filePath: string) {
-    const url = await getDocumentDownloadUrl(filePath);
-    if (url) window.open(url, "_blank");
-    else setError("تعذّر تحميل الملف");
+  async function handleDownload(documentId: string, filePath: string) {
+    setDownloadingId(documentId);
+    setError(null);
+    try {
+      const url = await getDocumentDownloadUrl(filePath);
+      if (url) window.open(url, "_blank");
+      else setError("تعذّر تحميل الملف");
+    } finally {
+      setDownloadingId(null);
+    }
   }
+
+  const isBusy = isPending || downloadingId !== null || deletingId !== null;
 
   return (
     <Card>
@@ -83,6 +95,7 @@ export function CaseDocumentsPanel({
             variant="outline"
             size="sm"
             className="w-full sm:w-auto"
+            disabled={isBusy}
             onClick={() => setShowForm((v) => !v)}
           >
             <Plus className="size-4" />
@@ -124,8 +137,7 @@ export function CaseDocumentsPanel({
               />
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row">
-              <Button type="submit" disabled={isPending} className="sm:flex-1">
-                {isPending && <Loader2 className="size-4 animate-spin" />}
+              <Button type="submit" loading={isPending} className="sm:flex-1">
                 حفظ المستند
               </Button>
               <Button
@@ -168,8 +180,9 @@ export function CaseDocumentsPanel({
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={isPending}
-                      onClick={() => handleDownload(doc.file_path!)}
+                      loading={downloadingId === doc.id}
+                      disabled={isBusy && downloadingId !== doc.id}
+                      onClick={() => handleDownload(doc.id, doc.file_path!)}
                     >
                       <Download className="size-4" />
                       تحميل
@@ -179,7 +192,8 @@ export function CaseDocumentsPanel({
                     <Button
                       variant="ghost"
                       size="sm"
-                      disabled={isPending}
+                      loading={deletingId === doc.id}
+                      disabled={isBusy && deletingId !== doc.id}
                       onClick={() => handleDelete(doc.id)}
                     >
                       <Trash2 className="size-4" />

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { NavButton } from "@/components/ui/nav-button";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Bell } from "lucide-react";
@@ -73,14 +73,16 @@ export function NotificationBell({
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="text-sm font-semibold">التنبيهات</h2>
           {unreadCount > 0 && (
-            <button
+            <Button
               type="button"
-              disabled={isPending}
+              variant="ghost"
+              size="xs"
+              loading={isPending}
               onClick={handleMarkAllRead}
-              className="text-primary text-xs font-medium hover:underline disabled:opacity-50"
+              className="h-auto px-0 text-primary text-xs font-medium hover:bg-transparent hover:underline"
             >
               تعليم الكل كمقروء
-            </button>
+            </Button>
           )}
         </div>
 
@@ -104,14 +106,9 @@ export function NotificationBell({
         </div>
 
         <div className="border-t p-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full"
-            render={<Link href="/notifications" />}
-          >
+          <NavButton href="/notifications" variant="ghost" size="sm" className="w-full">
             عرض كل التنبيهات
-          </Button>
+          </NavButton>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

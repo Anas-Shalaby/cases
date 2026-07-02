@@ -1,9 +1,10 @@
-import Link from "next/link";
+"use client";
+
 import { Eye, Pencil } from "lucide-react";
 
 import { StatusBadge } from "@/components/cases/status-badge";
 import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
-import { Button } from "@/components/ui/button";
+import { NavButton } from "@/components/ui/nav-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDefendantNames, formatPlaintiffNames } from "@/lib/case-parties";
 import { USER_ROLE_LABELS } from "@/lib/constants";
@@ -101,25 +102,25 @@ export function CaseMobileCard({
         )}
 
         <div className="flex gap-2">
-          <Button
+          <NavButton
+            href={`/cases/${caseItem.id}`}
             variant="outline"
             size="sm"
             className={canEdit ? "flex-1" : "w-full"}
-            render={<Link href={`/cases/${caseItem.id}`} />}
           >
             <Eye className="size-4" />
             عرض
-          </Button>
+          </NavButton>
           {canEdit && (
-            <Button
+            <NavButton
+              href={`/cases/${caseItem.id}/edit`}
               variant="outline"
               size="sm"
               className="flex-1"
-              render={<Link href={`/cases/${caseItem.id}/edit`} />}
             >
               <Pencil className="size-4" />
               تعديل
-            </Button>
+            </NavButton>
           )}
         </div>
       </CardContent>

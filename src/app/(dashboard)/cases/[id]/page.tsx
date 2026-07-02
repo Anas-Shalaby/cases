@@ -1,14 +1,15 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 
 import { CaseDocumentsPanel } from "@/components/cases/case-documents-panel";
 import { CaseMilestonesPanel } from "@/components/cases/case-milestones-panel";
-import { StatusBadge } from "@/components/cases/status-badge";
 import { DeleteCaseButton } from "@/components/cases/delete-case-button";
 import { ExportCaseButton } from "@/components/cases/export-case-button";
+import { PartiesCard } from "@/components/cases/parties-display";
+import { StatusBadge } from "@/components/cases/status-badge";
+import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
-import { Button } from "@/components/ui/button";
+import { NavButton } from "@/components/ui/nav-button";
 import {
   Card,
   CardContent,
@@ -20,10 +21,8 @@ import { Separator } from "@/components/ui/separator";
 import { getCaseById } from "@/lib/actions/cases";
 import { getCaseDocuments } from "@/lib/actions/case-documents";
 import { getCurrentProfile } from "@/lib/actions/profile";
-import { USER_ROLE_LABELS } from "@/lib/constants";
-import { PartiesCard } from "@/components/cases/parties-display";
-import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
 import { formatCasePartiesSummary } from "@/lib/case-parties";
+import { USER_ROLE_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 
 interface CaseDetailPageProps {
@@ -52,14 +51,14 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
         <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">
           <ExportCaseButton caseData={caseData} documents={documents} />
           {isCoordinator && (
-            <Button
+            <NavButton
               variant="outline"
               className="flex-1 sm:flex-none"
-              render={<Link href={`/cases/${id}/edit`} />}
+              href={`/cases/${id}/edit`}
             >
               <Pencil className="size-4" />
               تعديل
-            </Button>
+            </NavButton>
           )}
           {isCoordinator && <DeleteCaseButton caseId={id} />}
         </div>

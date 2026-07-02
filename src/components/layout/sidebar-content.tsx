@@ -1,15 +1,24 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Bell, ClipboardList, FileBarChart, LayoutDashboard, LogOut, Scale, Settings, Users } from "lucide-react";
+import {
+  Briefcase,
+  Bell,
+  ClipboardList,
+  FileBarChart,
+  LayoutDashboard,
+  Scale,
+  Settings,
+  Users,
+} from "lucide-react";
 
+import { LogoutButton } from "@/components/auth/logout-button";
+import { NavLink } from "@/components/ui/nav-button";
+import { Separator } from "@/components/ui/separator";
 import { logout } from "@/lib/actions/auth";
 import { NAV_ITEMS, USER_ROLE_LABELS } from "@/lib/constants";
 import { canAccessNotifications } from "@/lib/notifications-access";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import type { Profile } from "@/types/database";
 
 const iconMap = {
@@ -65,9 +74,10 @@ export function SidebarContent({ profile, onNavigate }: SidebarContentProps) {
               : pathname.startsWith(item.href);
 
           return (
-            <Link
+            <NavLink
               key={item.href}
               href={item.href}
+              active={isActive}
               onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
@@ -78,7 +88,7 @@ export function SidebarContent({ profile, onNavigate }: SidebarContentProps) {
             >
               <Icon className="size-4 shrink-0" />
               {item.label}
-            </Link>
+            </NavLink>
           );
         })}
       </nav>
@@ -93,14 +103,7 @@ export function SidebarContent({ profile, onNavigate }: SidebarContentProps) {
           </div>
         )}
         <form action={logout}>
-          <Button
-            type="submit"
-            variant="ghost"
-            className="w-full justify-start gap-2"
-          >
-            <LogOut className="size-4" />
-            تسجيل الخروج
-          </Button>
+          <LogoutButton />
         </form>
       </div>
     </div>
