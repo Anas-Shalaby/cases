@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { CASE_STATUS_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
+import { toDatetimeLocalValue } from "@/lib/utils";
 import {
   createCaseFormSchema,
   emptyPartyFormValues,
@@ -87,7 +88,7 @@ function caseToFormValues(caseData: CaseWithRelations): CaseFormValues {
     case_name: caseData.case_name,
     status: caseData.status,
     assignment_date: caseData.assignment_date ?? "",
-    meeting_date: caseData.meeting_date ?? "",
+    meeting_date: toDatetimeLocalValue(caseData.meeting_date),
     initial_report_date: caseData.initial_report_date ?? "",
     final_report_date: caseData.final_report_date ?? "",
     plaintiffs,
@@ -307,8 +308,12 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="meeting_date">تاريخ الاجتماع</Label>
-            <Input id="meeting_date" type="date" {...register("meeting_date")} />
+            <Label htmlFor="meeting_date">موعد الاجتماع</Label>
+            <Input
+              id="meeting_date"
+              type="datetime-local"
+              {...register("meeting_date")}
+            />
             {errors.meeting_date && (
               <p className="text-sm text-destructive">
                 {errors.meeting_date.message}

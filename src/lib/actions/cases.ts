@@ -19,6 +19,7 @@ import {
   type CaseFormValues,
   type PartyFormValues,
 } from "@/lib/validations/case";
+import { normalizeMeetingDate } from "@/lib/utils";
 import type { CasePartyType, CaseWithRelations, Profile } from "@/types/database";
 
 const CASE_SELECT = `
@@ -143,7 +144,7 @@ function toCasePayload(values: CaseFormValues) {
     case_name: values.case_name.trim(),
     status: values.status,
     assignment_date: emptyDate(values.assignment_date),
-    meeting_date: emptyDate(values.meeting_date),
+    meeting_date: normalizeMeetingDate(values.meeting_date),
     initial_report_date: emptyDate(values.initial_report_date),
     final_report_date: emptyDate(values.final_report_date),
     coordinator_id: emptyUuid(values.coordinator_id),

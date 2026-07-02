@@ -5,6 +5,7 @@ import {
   Bell,
   Briefcase,
   Calendar,
+  ClipboardList,
   FileText,
   Loader2,
   Trash2,
@@ -28,6 +29,7 @@ const TYPE_ICONS: Record<NotificationType, typeof Bell> = {
   meeting_reminder: Calendar,
   new_document: FileText,
   case_assigned: Briefcase,
+  task_assigned: ClipboardList,
 };
 
 type PendingAction = "read" | "delete" | "navigate" | null;

@@ -1,7 +1,7 @@
 import { formatDefendantNames, formatPlaintiffNames } from "@/lib/case-parties";
 import { CASE_MILESTONES } from "@/lib/case-milestones";
 import { CASE_STATUS_LABELS } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
 import type { CaseWithRelations } from "@/types/database";
 
 export const CASE_EXPORT_HEADERS = [
@@ -9,7 +9,7 @@ export const CASE_EXPORT_HEADERS = [
   "اسم القضية",
   "الحالة",
   "تاريخ التكليف",
-  "تاريخ الاجتماع",
+  "موعد الاجتماع",
   "التقرير المبدئي",
   "التقرير النهائي",
   "المدعي",
@@ -29,7 +29,7 @@ export function buildCaseExportRows(
       "اسم القضية": c.case_name,
       الحالة: CASE_STATUS_LABELS[c.status],
       "تاريخ التكليف": formatDate(c.assignment_date),
-      "تاريخ الاجتماع": formatDate(c.meeting_date),
+      "موعد الاجتماع": formatDateTime(c.meeting_date),
       "التقرير المبدئي": formatDate(c.initial_report_date),
       "التقرير النهائي": formatDate(c.final_report_date),
       المدعي: formatPlaintiffNames(c.parties),

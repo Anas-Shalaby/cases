@@ -24,6 +24,8 @@ export const TEAM_MEMBER_ROLE_LABELS: Record<
 
 export const NAV_ITEMS = [
   { href: "/", label: "لوحة التحكم", icon: "LayoutDashboard" as const },
+  { href: "/schedule", label: "المواعيد", icon: "Calendar" as const },
+  { href: "/tasks", label: "المهام", icon: "ListChecks" as const },
   { href: "/cases", label: "القضايا", icon: "Briefcase" as const },
   {
     href: "/notifications",

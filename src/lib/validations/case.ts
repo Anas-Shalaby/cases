@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { validateCaseDates, validateScheduleDates } from "@/lib/case-date-rules";
+import { normalizeMeetingDate } from "@/lib/utils";
 import type { CaseMilestoneKey } from "@/lib/case-milestones";
 import type { Case, CaseParty } from "@/types/database";
 
@@ -38,7 +39,7 @@ export const caseFormSchema = z.object({
     .transform((val) => val.trim()),
   status: z.enum(["open", "delayed", "closed"], {
     message: "حالة القضية مطلوبة",
-  }),
+  }), 
   assignment_date: optionalDate,
   meeting_date: optionalDate,
   initial_report_date: optionalDate,
@@ -82,7 +83,7 @@ export function createCaseFormSchema(context?: CaseFormDateContext) {
     const merged: CaseFormDateContext = {
       ...context,
       assignment_date: emptyDate(data.assignment_date),
-      meeting_date: emptyDate(data.meeting_date),
+      meeting_date: normalizeMeetingDate(data.meeting_date),
       initial_report_date: emptyDate(data.initial_report_date),
       final_report_date: emptyDate(data.final_report_date),
     };

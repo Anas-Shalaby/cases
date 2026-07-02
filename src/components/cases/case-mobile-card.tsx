@@ -8,7 +8,7 @@ import { NavButton } from "@/components/ui/nav-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDefendantNames, formatPlaintiffNames } from "@/lib/case-parties";
 import { USER_ROLE_LABELS } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
 import type { CaseWithRelations } from "@/types/database";
 
 interface CaseMobileCardProps {
@@ -60,7 +60,7 @@ export function CaseMobileCard({
             <>
               <div>
                 <p className="text-muted-foreground mb-0.5 text-xs">الاجتماع</p>
-                <p>{formatDate(caseItem.meeting_date)}</p>
+                <p>{formatDateTime(caseItem.meeting_date)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground mb-0.5 text-xs">

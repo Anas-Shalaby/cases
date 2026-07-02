@@ -5,7 +5,10 @@ export type NotificationType =
   | "report_deadline"
   | "meeting_reminder"
   | "new_document"
-  | "case_assigned";
+  | "case_assigned"
+  | "task_assigned";
+
+export type CaseTaskStatus = "pending" | "completed";
 
 export type LogActionType =
   | "create_case"
@@ -76,6 +79,25 @@ export interface CaseDocument {
   uploaded_by: string | null;
   created_at: string;
   uploader?: Pick<Profile, "id" | "full_name"> | null;
+}
+
+export interface CaseTask {
+  id: string;
+  case_id: string;
+  title: string;
+  description: string | null;
+  due_date: string;
+  assigned_to: string;
+  created_by: string;
+  status: CaseTaskStatus;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export interface CaseTaskWithRelations extends CaseTask {
+  assignee: Pick<Profile, "id" | "full_name" | "role"> | null;
+  creator: Pick<Profile, "id" | "full_name"> | null;
+  case: Pick<Case, "id" | "case_number" | "case_name"> | null;
 }
 
 export interface Notification {
@@ -216,6 +238,30 @@ export interface Database {
         };
         Relationships: [];
       };
+      case_tasks: {
+        Row: CaseTask;
+        Insert: {
+          id?: string;
+          case_id: string;
+          title: string;
+          description?: string | null;
+          due_date: string;
+          assigned_to: string;
+          created_by: string;
+          status?: CaseTaskStatus;
+          completed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          title?: string;
+          description?: string | null;
+          due_date?: string;
+          assigned_to?: string;
+          status?: CaseTaskStatus;
+          completed_at?: string | null;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: Notification;
         Insert: {
@@ -266,6 +312,7 @@ export interface Database {
       user_role: UserRole;
       case_status: CaseStatus;
       case_party_type: CasePartyType;
+      case_task_status: CaseTaskStatus;
       notification_type: NotificationType;
       log_action_type: LogActionType;
     };

@@ -3,7 +3,7 @@ import type { Case } from "@/types/database";
 
 export const CASE_SCHEDULE_FIELDS = [
   { key: "assignment_date", label: "تاريخ التكليف" },
-  { key: "meeting_date", label: "تاريخ الاجتماع" },
+  { key: "meeting_date", label: "موعد الاجتماع" },
   { key: "initial_report_date", label: "تاريخ التقرير الأولي" },
   { key: "final_report_date", label: "تاريخ التقرير النهائي" },
 ] as const;
@@ -88,7 +88,7 @@ function validateMilestoneAgainstSchedule(
   date: string
 ): string | null {
   const pairs: { milestone: CaseMilestoneKey; schedule: CaseScheduleField; scheduleLabel: string }[] = [
-    { milestone: "experts_meeting_at", schedule: "meeting_date", scheduleLabel: "تاريخ الاجتماع" },
+    { milestone: "experts_meeting_at", schedule: "meeting_date", scheduleLabel: "موعد الاجتماع" },
     {
       milestone: "initial_report_prepared_at",
       schedule: "initial_report_date",

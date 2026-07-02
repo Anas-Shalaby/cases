@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { USER_ROLE_LABELS } from "@/lib/constants";
 import { getPartiesByType } from "@/lib/case-parties";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatDate, formatDateTime } from "@/lib/utils";
 import type { CasePartyType, CaseWithRelations } from "@/types/database";
 
 interface CasesDataTableProps {
@@ -175,7 +175,7 @@ export function CasesDataTable({
             </TableCell>
 
             <TableCell className="align-top">
-              <CellText value={formatDate(caseItem.meeting_date)} muted />
+              <CellText value={formatDateTime(caseItem.meeting_date)} muted />
             </TableCell>
 
             <TableCell className="align-top">

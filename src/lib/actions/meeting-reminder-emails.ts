@@ -4,6 +4,7 @@ import {
   sendMeetingReminderEmail,
 } from "@/lib/email/send-meeting-reminder-email";
 import type { CaseParty } from "@/types/database";
+import { toDateOnly } from "@/lib/utils";
 
 export type MeetingReminderEmailResult = {
   sent: number;
@@ -73,7 +74,7 @@ export async function sendTomorrowMeetingReminderEmails(): Promise<MeetingRemind
       parties:case_parties(name, party_type)
     `
     )
-    .eq("meeting_date", meetingDate)
+    .not("meeting_date", "is", null)
     .neq("status", "closed")
     .not("coordinator_id", "is", null);
 
@@ -82,9 +83,11 @@ export async function sendTomorrowMeetingReminderEmails(): Promise<MeetingRemind
     return result;
   }
 
-  const appBaseUrl = getAppBaseUrl();
+  const rows = ((cases ?? []) as unknown as TomorrowMeetingCase[]).filter(
+    (caseItem) => toDateOnly(caseItem.meeting_date) === meetingDate
+  );
 
-  const rows = (cases ?? []) as unknown as TomorrowMeetingCase[];
+  const appBaseUrl = getAppBaseUrl();
 
   for (const caseItem of rows) {
     if (!caseItem.coordinator_id) {

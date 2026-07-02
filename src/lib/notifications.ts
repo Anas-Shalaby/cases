@@ -5,6 +5,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   meeting_reminder: "تذكير اجتماع",
   new_document: "مستند جديد",
   case_assigned: "إسناد قضية",
+  task_assigned: "مهمة مخصصة",
 };
 
 export const NOTIFICATION_TYPE_COLORS: Record<NotificationType, string> = {
@@ -16,4 +17,6 @@ export const NOTIFICATION_TYPE_COLORS: Record<NotificationType, string> = {
     "text-emerald-700 bg-emerald-50 dark:bg-emerald-950 dark:text-emerald-300",
   case_assigned:
     "text-indigo-700 bg-indigo-50 dark:bg-indigo-950 dark:text-indigo-300",
+  task_assigned:
+    "text-violet-700 bg-violet-50 dark:bg-violet-950 dark:text-violet-300",
 };

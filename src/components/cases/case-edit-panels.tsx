@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { updateCase } from "@/lib/actions/cases";
 import { CASE_MILESTONE_KEYS, type CaseMilestoneKey } from "@/lib/case-milestones";
+import { normalizeMeetingDate } from "@/lib/utils";
 import {
   emptyDate,
   type CaseFormDateContext,
@@ -53,7 +54,7 @@ function toDateContext(
 function scheduleDatesFromValues(values: CaseFormValues) {
   return {
     assignment_date: emptyDate(values.assignment_date),
-    meeting_date: emptyDate(values.meeting_date),
+    meeting_date: normalizeMeetingDate(values.meeting_date),
     initial_report_date: emptyDate(values.initial_report_date),
     final_report_date: emptyDate(values.final_report_date),
   };

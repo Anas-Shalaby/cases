@@ -3,6 +3,7 @@ import { Pencil } from "lucide-react";
 
 import { CaseDocumentsPanel } from "@/components/cases/case-documents-panel";
 import { CaseMilestonesPanel } from "@/components/cases/case-milestones-panel";
+import { CaseTasksPanel } from "@/components/cases/case-tasks-panel";
 import { DeleteCaseButton } from "@/components/cases/delete-case-button";
 import { ExportCaseButton } from "@/components/cases/export-case-button";
 import { PartiesCard } from "@/components/cases/parties-display";
@@ -20,10 +21,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { getCaseById } from "@/lib/actions/cases";
 import { getCaseDocuments } from "@/lib/actions/case-documents";
+import { getCaseTasks } from "@/lib/actions/case-tasks";
 import { getCurrentProfile } from "@/lib/actions/profile";
 import { formatCasePartiesSummary } from "@/lib/case-parties";
 import { USER_ROLE_LABELS } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
 
 interface CaseDetailPageProps {
   params: Promise<{ id: string }>;
@@ -31,10 +33,11 @@ interface CaseDetailPageProps {
 
 export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   const { id } = await params;
-  const [caseData, profile, documents] = await Promise.all([
+  const [caseData, profile, documents, tasks] = await Promise.all([
     getCaseById(id).catch(() => null),
     getCurrentProfile(),
     getCaseDocuments(id).catch(() => []),
+    getCaseTasks(id).catch(() => []),
   ]);
 
   if (!caseData) notFound();
@@ -84,6 +87,13 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
         canManage={isCoordinator}
       />
 
+      <CaseTasksPanel
+        caseData={caseData}
+        tasks={tasks}
+        canManage={isCoordinator}
+        currentUserId={profile?.id}
+      />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -92,7 +102,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             <DateRow label="تاريخ التكليف" value={caseData.assignment_date} />
-            <DateRow label="تاريخ الاجتماع" value={caseData.meeting_date} />
+            <DateRow label="موعد الاجتماع" value={caseData.meeting_date} datetime />
             <DateRow
               label="تاريخ التقرير الأولي"
               value={caseData.initial_report_date}
@@ -163,11 +173,21 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   );
 }
 
-function DateRow({ label, value }: { label: string; value: string | null }) {
+function DateRow({
+  label,
+  value,
+  datetime = false,
+}: {
+  label: string;
+  value: string | null;
+  datetime?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
       <span className="text-muted-foreground shrink-0">{label}</span>
-      <span className="font-medium sm:text-left">{formatDate(value)}</span>
+      <span className="font-medium sm:text-left">
+        {datetime ? formatDateTime(value) : formatDate(value)}
+      </span>
     </div>
   );
 }

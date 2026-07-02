@@ -14,6 +14,53 @@ export function formatDate(date: string | null | undefined): string {
   }).format(new Date(date));
 }
 
+export function formatTime(date: string | null | undefined): string | null {
+  if (!date) return null;
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return null;
+  if (!date.includes("T") && date.length <= 10) return null;
+  return new Intl.DateTimeFormat("ar-SA", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
+export function formatDateTime(date: string | null | undefined): string {
+  if (!date) return "—";
+  const time = formatTime(date);
+  if (!time) return formatDate(date);
+  return `${formatDate(date)} — ${time}`;
+}
+
+export function toDateOnly(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return value.slice(0, 10);
+}
+
+export function toDatetimeLocalValue(
+  value: string | null | undefined
+): string {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value.slice(0, 10);
+
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+}
+
+export function normalizeMeetingDate(
+  value: string | undefined | null
+): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (trimmed.includes("T")) {
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString();
+  }
+  return new Date(`${trimmed}T12:00:00`).toISOString();
+}
+
 export function formatRelativeTime(date: string): string {
   const now = Date.now();
   const then = new Date(date).getTime();

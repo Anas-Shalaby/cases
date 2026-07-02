@@ -5,10 +5,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const TEST_CASE_NUMBER = "تجريبي-بريد-غدا";
 
-function tomorrowDateString(): string {
+function tomorrowMeetingIso(): string {
   const date = new Date();
   date.setDate(date.getDate() + 1);
-  return date.toISOString().slice(0, 10);
+  date.setHours(10, 0, 0, 0);
+  return date.toISOString();
+}
+
+function tomorrowDateString(): string {
+  return tomorrowMeetingIso().slice(0, 10);
 }
 
 export async function POST() {
@@ -18,6 +23,7 @@ export async function POST() {
 
   const admin = createAdminClient();
   const meetingDate = tomorrowDateString();
+  const meetingDateTime = tomorrowMeetingIso();
 
   let coordinator: { id: string; full_name: string } | null = null;
 
@@ -75,7 +81,7 @@ export async function POST() {
     const { error: updateError } = await admin
       .from("cases")
       .update({
-        meeting_date: meetingDate,
+        meeting_date: meetingDateTime,
         status: "open",
         coordinator_id: coordinator.id,
       })
@@ -92,7 +98,7 @@ export async function POST() {
         case_name: "اختبار بريد تذكير الاجتماع — غداً",
         status: "open",
         assignment_date: new Date().toISOString().slice(0, 10),
-        meeting_date: meetingDate,
+        meeting_date: meetingDateTime,
         coordinator_id: coordinator.id,
         expert_id: coordinator.id,
         assistant_id: coordinator.id,

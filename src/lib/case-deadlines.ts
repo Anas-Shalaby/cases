@@ -1,4 +1,5 @@
 import type { Case, CaseWithRelations } from "@/types/database";
+import { formatTime, toDateOnly } from "@/lib/utils";
 
 /** عدد الأيام المتبقية التي تُعتبر فيها القضية متأخرة/عاجلة */
 export const URGENT_DEADLINE_DAYS = 2;
@@ -31,6 +32,7 @@ export interface CaseDeadline {
   caseName: string;
   deadlineType: DeadlineType;
   deadlineDate: string;
+  label: string;
   daysUntil: number;
   /** تجاوز الموعد */
   isPastDue: boolean;
@@ -66,6 +68,14 @@ const DEADLINE_FIELDS: {
     milestoneField: "final_report_prepared_at",
   },
 ];
+
+function getDeadlineLabel(type: DeadlineType, rawDate: string): string {
+  if (type === "meeting") {
+    const time = formatTime(rawDate);
+    return time ? `${DEADLINE_LABELS.meeting} — ${time}` : DEADLINE_LABELS.meeting;
+  }
+  return DEADLINE_LABELS[type];
+}
 
 function daysBetween(from: string, to: string): number {
   const fromMs = new Date(from).setHours(0, 0, 0, 0);
@@ -106,7 +116,8 @@ export function collectCaseDeadlines(
       // لا نُظهر موعداً إذا أُنجزت المرحلة المقابلة له
       if (caseItem[milestoneField]) continue;
 
-      const daysUntil = daysBetween(today, date);
+      const dateOnly = toDateOnly(date) ?? date;
+      const daysUntil = daysBetween(today, dateOnly);
       const isPastDue = daysUntil < 0;
       const isLate = daysUntil <= URGENT_DEADLINE_DAYS;
 
@@ -115,7 +126,8 @@ export function collectCaseDeadlines(
         caseNumber: caseItem.case_number,
         caseName: caseItem.case_name,
         deadlineType: type,
-        deadlineDate: date,
+        deadlineDate: dateOnly,
+        label: getDeadlineLabel(type, date),
         daysUntil,
         isPastDue,
         isLate,

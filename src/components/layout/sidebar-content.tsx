@@ -4,9 +4,11 @@ import { usePathname } from "next/navigation";
 import {
   Briefcase,
   Bell,
+  Calendar,
   ClipboardList,
   FileBarChart,
   LayoutDashboard,
+  ListChecks,
   Scale,
   Settings,
   Users,
@@ -23,6 +25,8 @@ import type { Profile } from "@/types/database";
 
 const iconMap = {
   LayoutDashboard,
+  Calendar,
+  ListChecks,
   Briefcase,
   Bell,
   FileBarChart,
