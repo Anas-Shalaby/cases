@@ -11,7 +11,9 @@ export default function LoginPage() {
         <div className="w-full max-w-md rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
           إعدادات Supabase غير مكتملة على السيرفر. أضف{" "}
           <code className="font-mono text-xs">NEXT_PUBLIC_SUPABASE_URL</code> و{" "}
-          <code className="font-mono text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>{" "}
+          <code className="font-mono text-xs">
+            NEXT_PUBLIC_SUPABASE_ANON_KEY
+          </code>{" "}
           في Vercel ثم أعد النشر.
         </div>
       )}

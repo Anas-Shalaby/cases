@@ -13,6 +13,7 @@ import {
 } from "react";
 import { useForm } from "react-hook-form";
 
+import { PartySection } from "@/components/cases/party-section";
 import { ProfileSelect } from "@/components/cases/profile-select";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,10 +36,12 @@ import { Separator } from "@/components/ui/separator";
 import { CASE_STATUS_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import {
   createCaseFormSchema,
+  emptyPartyFormValues,
+  partiesToFormValues,
   type CaseFormDateContext,
   type CaseFormValues,
 } from "@/lib/validations/case";
-import type { Case, Profile } from "@/types/database";
+import type { CaseWithRelations, Profile } from "@/types/database";
 
 export type CaseFormHandle = {
   triggerValidation: () => Promise<boolean>;
@@ -49,7 +52,7 @@ export type CaseFormHandle = {
 
 interface CaseFormProps {
   profiles: Pick<Profile, "id" | "full_name" | "role">[];
-  initialData?: Case;
+  initialData?: CaseWithRelations;
   dateContext?: CaseFormDateContext;
   onSubmit: (
     values: CaseFormValues
@@ -70,18 +73,16 @@ const defaultValues: CaseFormValues = {
   meeting_date: "",
   initial_report_date: "",
   final_report_date: "",
-  plaintiff_name: "",
-  plaintiff_phone: "",
-  plaintiff_email: "",
-  defendant_name: "",
-  defendant_phone: "",
-  defendant_email: "",
+  plaintiffs: [{ ...emptyPartyFormValues }],
+  defendants: [{ ...emptyPartyFormValues }],
   coordinator_id: "",
   expert_id: "",
   assistant_id: "",
 };
 
-function caseToFormValues(caseData: Case): CaseFormValues {
+function caseToFormValues(caseData: CaseWithRelations): CaseFormValues {
+  const { plaintiffs, defendants } = partiesToFormValues(caseData.parties);
+
   return {
     case_number: caseData.case_number,
     case_name: caseData.case_name,
@@ -90,12 +91,8 @@ function caseToFormValues(caseData: Case): CaseFormValues {
     meeting_date: caseData.meeting_date ?? "",
     initial_report_date: caseData.initial_report_date ?? "",
     final_report_date: caseData.final_report_date ?? "",
-    plaintiff_name: caseData.plaintiff_name,
-    plaintiff_phone: caseData.plaintiff_phone ?? "",
-    plaintiff_email: caseData.plaintiff_email ?? "",
-    defendant_name: caseData.defendant_name,
-    defendant_phone: caseData.defendant_phone ?? "",
-    defendant_email: caseData.defendant_email ?? "",
+    plaintiffs,
+    defendants,
     coordinator_id: caseData.coordinator_id ?? "",
     expert_id: caseData.expert_id ?? "",
     assistant_id: caseData.assistant_id ?? "",
@@ -142,6 +139,7 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
     trigger,
     getValues,
     setError,
+    control,
     formState: { errors, isValid },
   } = form;
 
@@ -210,6 +208,8 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
           err.meeting_date?.[0] ??
           err.initial_report_date?.[0] ??
           err.final_report_date?.[0] ??
+          err.plaintiffs?.[0] ??
+          err.defendants?.[0] ??
           err.coordinator_id?.[0] ??
           err.expert_id?.[0] ??
           err.assistant_id?.[0] ??
@@ -345,77 +345,29 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>بيانات المدعي</CardTitle>
-          <CardDescription>معلومات الطرف المدعي</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="plaintiff_name">اسم المدعي *</Label>
-            <Input id="plaintiff_name" {...register("plaintiff_name")} />
-            {errors.plaintiff_name && (
-              <p className="text-sm text-destructive">
-                {errors.plaintiff_name.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="plaintiff_phone">رقم الهاتف</Label>
-            <Input id="plaintiff_phone" dir="ltr" {...register("plaintiff_phone")} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="plaintiff_email">البريد الإلكتروني</Label>
-            <Input
-              id="plaintiff_email"
-              type="email"
-              dir="ltr"
-              {...register("plaintiff_email")}
-            />
-            {errors.plaintiff_email && (
-              <p className="text-sm text-destructive">
-                {errors.plaintiff_email.message}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <PartySection
+        title="بيانات المدعي"
+        description="معلومات الأطراف المدعية — يمكن إضافة أكثر من مدعي"
+        partyLabel="المدعي"
+        agentTitle="بيانات وكيل المدعي"
+        fieldName="plaintiffs"
+        control={control}
+        register={register}
+        errors={errors}
+        disabled={isPending}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>بيانات المدعي عليه</CardTitle>
-          <CardDescription>معلومات الطرف المدعى عليه</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="defendant_name">اسم المدعي عليه *</Label>
-            <Input id="defendant_name" {...register("defendant_name")} />
-            {errors.defendant_name && (
-              <p className="text-sm text-destructive">
-                {errors.defendant_name.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="defendant_phone">رقم الهاتف</Label>
-            <Input id="defendant_phone" dir="ltr" {...register("defendant_phone")} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="defendant_email">البريد الإلكتروني</Label>
-            <Input
-              id="defendant_email"
-              type="email"
-              dir="ltr"
-              {...register("defendant_email")}
-            />
-            {errors.defendant_email && (
-              <p className="text-sm text-destructive">
-                {errors.defendant_email.message}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <PartySection
+        title="بيانات المدعي عليه"
+        description="معلومات الأطراف المدعى عليها — يمكن إضافة أكثر من مدعي عليه"
+        partyLabel="المدعي عليه"
+        agentTitle="بيانات وكيل المدعي عليه"
+        fieldName="defendants"
+        control={control}
+        register={register}
+        errors={errors}
+        disabled={isPending}
+      />
 
       <Card>
         <CardHeader>

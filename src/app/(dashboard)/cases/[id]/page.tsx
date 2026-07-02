@@ -6,6 +6,7 @@ import { CaseDocumentsPanel } from "@/components/cases/case-documents-panel";
 import { CaseMilestonesPanel } from "@/components/cases/case-milestones-panel";
 import { StatusBadge } from "@/components/cases/status-badge";
 import { DeleteCaseButton } from "@/components/cases/delete-case-button";
+import { ExportCaseButton } from "@/components/cases/export-case-button";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +21,9 @@ import { getCaseById } from "@/lib/actions/cases";
 import { getCaseDocuments } from "@/lib/actions/case-documents";
 import { getCurrentProfile } from "@/lib/actions/profile";
 import { USER_ROLE_LABELS } from "@/lib/constants";
+import { PartiesCard } from "@/components/cases/parties-display";
 import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
+import { formatCasePartiesSummary } from "@/lib/case-parties";
 import { formatDate } from "@/lib/utils";
 
 interface CaseDetailPageProps {
@@ -44,9 +47,10 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <DashboardHeader
           title={caseData.case_name}
-          description={`${caseData.case_number} — ${caseData.plaintiff_name} ضد ${caseData.defendant_name} · ${formatDate(caseData.created_at)}`}
+          description={`${caseData.case_number} — ${formatCasePartiesSummary(caseData.parties)} · ${formatDate(caseData.created_at)}`}
         />
         <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">
+          <ExportCaseButton caseData={caseData} documents={documents} />
           {isCoordinator && (
             <Button
               variant="outline"
@@ -68,8 +72,8 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
 
       <Card>
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-2">
-          <InfoRow label="رقم القضية" value={caseData.case_number} dir="ltr" />
-          <InfoRow label="اسم القضية" value={caseData.case_name} />
+          <DetailInfoRow label="رقم القضية" value={caseData.case_number} dir="ltr" />
+          <DetailInfoRow label="اسم القضية" value={caseData.case_name} />
         </CardContent>
       </Card>
 
@@ -130,13 +134,13 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           <CardHeader>
             <CardTitle>بيانات المدعي</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <InfoRow label="الاسم" value={caseData.plaintiff_name} />
-            <InfoRow label="الهاتف" value={caseData.plaintiff_phone} dir="ltr" />
-            <InfoRow
-              label="البريد الإلكتروني"
-              value={caseData.plaintiff_email}
-              dir="ltr"
+          <CardContent>
+            <PartiesCard
+              parties={caseData.parties}
+              title="بيانات المدعي"
+              partyType="plaintiff"
+              partyLabel="المدعي"
+              agentTitle="بيانات وكيل المدعي"
             />
           </CardContent>
         </Card>
@@ -145,13 +149,13 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           <CardHeader>
             <CardTitle>بيانات المدعي عليه</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <InfoRow label="الاسم" value={caseData.defendant_name} />
-            <InfoRow label="الهاتف" value={caseData.defendant_phone} dir="ltr" />
-            <InfoRow
-              label="البريد الإلكتروني"
-              value={caseData.defendant_email}
-              dir="ltr"
+          <CardContent>
+            <PartiesCard
+              parties={caseData.parties}
+              title="بيانات المدعي عليه"
+              partyType="defendant"
+              partyLabel="المدعي عليه"
+              agentTitle="بيانات وكيل المدعي عليه"
             />
           </CardContent>
         </Card>
@@ -201,7 +205,7 @@ function TeamRow({
   );
 }
 
-function InfoRow({
+function DetailInfoRow({
   label,
   value,
   dir,
@@ -218,7 +222,7 @@ function InfoRow({
         dir={dir}
       >
         {value ?? "—"}
-      </span>
+      </span> 
     </div>
   );
 }

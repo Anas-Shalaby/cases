@@ -21,8 +21,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { USER_ROLE_LABELS } from "@/lib/constants";
+import { getPartiesByType } from "@/lib/case-parties";
 import { cn, formatDate } from "@/lib/utils";
-import type { CaseWithRelations } from "@/types/database";
+import type { CasePartyType, CaseWithRelations } from "@/types/database";
 
 interface CasesDataTableProps {
   cases: CaseWithRelations[];
@@ -51,21 +52,28 @@ function CellText({
   );
 }
 
-function PersonCell({
-  name,
-  phone,
-  email,
+function PartiesCell({
+  parties,
+  partyType,
 }: {
-  name: string;
-  phone?: string | null;
-  email?: string | null;
+  parties: CaseWithRelations["parties"];
+  partyType: CasePartyType;
 }) {
+  const items = getPartiesByType(parties, partyType);
+  if (items.length === 0) {
+    return <CellText value="—" muted />;
+  }
+
+  const contact = items.find((party) => party.phone || party.email);
+
   return (
     <div className="min-w-[180px] space-y-0.5">
-      <p className="font-medium leading-snug break-words">{name}</p>
-      {(phone || email) && (
+      <p className="font-medium leading-snug break-words">
+        {items.map((party) => party.name).join("، ")}
+      </p>
+      {contact && (
         <p className="text-muted-foreground text-xs leading-snug" dir="ltr">
-          {phone || email}
+          {contact.phone || contact.email}
         </p>
       )}
     </div>
@@ -136,19 +144,11 @@ export function CasesDataTable({
             </TableCell>
 
             <TableCell className="align-top">
-              <PersonCell
-                name={caseItem.plaintiff_name}
-                phone={caseItem.plaintiff_phone}
-                email={caseItem.plaintiff_email}
-              />
+              <PartiesCell parties={caseItem.parties} partyType="plaintiff" />
             </TableCell>
 
             <TableCell className="align-top">
-              <PersonCell
-                name={caseItem.defendant_name}
-                phone={caseItem.defendant_phone}
-                email={caseItem.defendant_email}
-              />
+              <PartiesCell parties={caseItem.parties} partyType="defendant" />
             </TableCell>
 
             <TableCell className="align-top">

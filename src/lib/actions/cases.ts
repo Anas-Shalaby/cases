@@ -17,26 +17,31 @@ import {
   emptyDate,
   emptyUuid,
   type CaseFormValues,
+  type PartyFormValues,
 } from "@/lib/validations/case";
-import type { CaseWithRelations, Profile } from "@/types/database";
+import type { CasePartyType, CaseWithRelations, Profile } from "@/types/database";
+
+const CASE_SELECT = `
+  *,
+  parties:case_parties(*),
+  coordinator:profiles!cases_coordinator_id_fkey(id, full_name),
+  expert:profiles!cases_expert_id_fkey(id, full_name),
+  assistant:profiles!cases_assistant_id_fkey(id, full_name)
+`;
 
 export async function getCases(): Promise<CaseWithRelations[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("cases")
-    .select(
-      `
-      *,
-      coordinator:profiles!cases_coordinator_id_fkey(id, full_name),
-      expert:profiles!cases_expert_id_fkey(id, full_name),
-      assistant:profiles!cases_assistant_id_fkey(id, full_name)
-    `
-    )
+    .select(CASE_SELECT)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as CaseWithRelations[];
+  return (data ?? []).map((caseItem) => ({
+    ...caseItem,
+    parties: caseItem.parties ?? [],
+  })) as CaseWithRelations[];
 }
 
 export async function getCaseById(id: string): Promise<CaseWithRelations> {
@@ -44,19 +49,15 @@ export async function getCaseById(id: string): Promise<CaseWithRelations> {
 
   const { data, error } = await supabase
     .from("cases")
-    .select(
-      `
-      *,
-      coordinator:profiles!cases_coordinator_id_fkey(id, full_name),
-      expert:profiles!cases_expert_id_fkey(id, full_name),
-      assistant:profiles!cases_assistant_id_fkey(id, full_name)
-    `
-    )
+    .select(CASE_SELECT)
     .eq("id", id)
     .single();
 
   if (error) throw new Error(error.message);
-  return data as CaseWithRelations;
+  return {
+    ...data,
+    parties: data.parties ?? [],
+  } as CaseWithRelations;
 }
 
 export async function getProfiles(): Promise<
@@ -145,16 +146,55 @@ function toCasePayload(values: CaseFormValues) {
     meeting_date: emptyDate(values.meeting_date),
     initial_report_date: emptyDate(values.initial_report_date),
     final_report_date: emptyDate(values.final_report_date),
-    plaintiff_name: values.plaintiff_name,
-    plaintiff_phone: values.plaintiff_phone || null,
-    plaintiff_email: values.plaintiff_email || null,
-    defendant_name: values.defendant_name,
-    defendant_phone: values.defendant_phone || null,
-    defendant_email: values.defendant_email || null,
     coordinator_id: emptyUuid(values.coordinator_id),
     expert_id: emptyUuid(values.expert_id),
     assistant_id: emptyUuid(values.assistant_id),
   };
+}
+
+function toPartyRows(
+  caseId: string,
+  partyType: CasePartyType,
+  parties: PartyFormValues[]
+) {
+  return parties.map((party, index) => ({
+    case_id: caseId,
+    party_type: partyType,
+    name: party.name.trim(),
+    phone: party.phone || null,
+    email: party.email || null,
+    agent_name: party.agent_name || null,
+    agent_phone: party.agent_phone || null,
+    agent_email: party.agent_email || null,
+    sort_order: index,
+  }));
+}
+
+async function syncCaseParties(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  caseId: string,
+  values: CaseFormValues
+) {
+  const { error: deleteError } = await supabase
+    .from("case_parties")
+    .delete()
+    .eq("case_id", caseId);
+
+  if (deleteError) {
+    return { error: deleteError.message };
+  }
+
+  const rows = [
+    ...toPartyRows(caseId, "plaintiff", values.plaintiffs),
+    ...toPartyRows(caseId, "defendant", values.defendants),
+  ];
+
+  const { error: insertError } = await supabase.from("case_parties").insert(rows);
+  if (insertError) {
+    return { error: insertError.message };
+  }
+
+  return { success: true as const };
 }
 
 export async function createCase(values: CaseFormValues) {
@@ -191,6 +231,12 @@ export async function createCase(values: CaseFormValues) {
   }
 
   const caseId = (data as { id: string }).id;
+  const partiesResult = await syncCaseParties(supabase, caseId, parsed.data);
+  if ("error" in partiesResult) {
+    await supabase.from("cases").delete().eq("id", caseId);
+    return { error: { _form: [partiesResult.error] } };
+  }
+
   await logActivity({
     userId: auth.profile.id,
     actionType: "create_case",
@@ -268,6 +314,11 @@ export async function updateCase(
       return { error: { case_number: ["رقم القضية مستخدم بالفعل"] } };
     }
     return { error: { _form: [error.message] } };
+  }
+
+  const partiesResult = await syncCaseParties(supabase, id, parsed.data);
+  if ("error" in partiesResult) {
+    return { error: { _form: [partiesResult.error] } };
   }
 
   const oldStatus = existingCase?.status as string | undefined;

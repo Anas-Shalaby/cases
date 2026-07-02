@@ -1,5 +1,6 @@
 export type UserRole = "coordinator" | "expert" | "assistant";
 export type CaseStatus = "open" | "delayed" | "closed";
+export type CasePartyType = "plaintiff" | "defendant";
 export type NotificationType =
   | "report_deadline"
   | "meeting_reminder"
@@ -23,6 +24,20 @@ export interface Profile {
   created_at: string;
 }
 
+export interface CaseParty {
+  id: string;
+  case_id: string;
+  party_type: CasePartyType;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  agent_name: string | null;
+  agent_phone: string | null;
+  agent_email: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface Case {
   id: string;
   case_number: string;
@@ -40,12 +55,6 @@ export interface Case {
   initial_report_prepared_at: string | null;
   final_report_prepared_at: string | null;
   case_closed_at: string | null;
-  plaintiff_name: string;
-  plaintiff_phone: string | null;
-  plaintiff_email: string | null;
-  defendant_name: string;
-  defendant_phone: string | null;
-  defendant_email: string | null;
   coordinator_id: string | null;
   expert_id: string | null;
   assistant_id: string | null;
@@ -53,6 +62,7 @@ export interface Case {
 }
 
 export interface CaseWithRelations extends Case {
+  parties: CaseParty[];
   coordinator: Pick<Profile, "id" | "full_name"> | null;
   expert: Pick<Profile, "id" | "full_name"> | null;
   assistant: Pick<Profile, "id" | "full_name"> | null;
@@ -136,12 +146,6 @@ export interface Database {
           initial_report_prepared_at?: string | null;
           final_report_prepared_at?: string | null;
           case_closed_at?: string | null;
-          plaintiff_name: string;
-          plaintiff_phone?: string | null;
-          plaintiff_email?: string | null;
-          defendant_name: string;
-          defendant_phone?: string | null;
-          defendant_email?: string | null;
           coordinator_id?: string | null;
           expert_id?: string | null;
           assistant_id?: string | null;
@@ -163,15 +167,36 @@ export interface Database {
           initial_report_prepared_at?: string | null;
           final_report_prepared_at?: string | null;
           case_closed_at?: string | null;
-          plaintiff_name?: string;
-          plaintiff_phone?: string | null;
-          plaintiff_email?: string | null;
-          defendant_name?: string;
-          defendant_phone?: string | null;
-          defendant_email?: string | null;
           coordinator_id?: string | null;
           expert_id?: string | null;
           assistant_id?: string | null;
+        };
+        Relationships: [];
+      };
+      case_parties: {
+        Row: CaseParty;
+        Insert: {
+          id?: string;
+          case_id: string;
+          party_type: CasePartyType;
+          name: string;
+          phone?: string | null;
+          email?: string | null;
+          agent_name?: string | null;
+          agent_phone?: string | null;
+          agent_email?: string | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          party_type?: CasePartyType;
+          name?: string;
+          phone?: string | null;
+          email?: string | null;
+          agent_name?: string | null;
+          agent_phone?: string | null;
+          agent_email?: string | null;
+          sort_order?: number;
         };
         Relationships: [];
       };
@@ -240,6 +265,7 @@ export interface Database {
     Enums: {
       user_role: UserRole;
       case_status: CaseStatus;
+      case_party_type: CasePartyType;
       notification_type: NotificationType;
       log_action_type: LogActionType;
     };

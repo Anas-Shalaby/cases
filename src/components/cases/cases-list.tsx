@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { CASE_STATUS_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
-import { isCaseLate, getCasesWithLateDeadlines } from "@/lib/case-deadlines";
+import { caseMatchesPartySearch } from "@/lib/case-parties";
+import { getCasesWithLateDeadlines, isCaseLate } from "@/lib/case-deadlines";
 import { cn } from "@/lib/utils";
 import type { CaseStatus, CaseWithRelations } from "@/types/database";
 
@@ -72,10 +73,7 @@ export function CasesList({
         !query ||
         caseItem.case_number?.toLowerCase().includes(query) ||
         caseItem.case_name?.toLowerCase().includes(query) ||
-        caseItem.plaintiff_name.toLowerCase().includes(query) ||
-        caseItem.defendant_name.toLowerCase().includes(query) ||
-        caseItem.plaintiff_phone?.toLowerCase().includes(query) ||
-        caseItem.defendant_phone?.toLowerCase().includes(query) ||
+        caseMatchesPartySearch(caseItem.parties, query) ||
         caseItem.coordinator?.full_name?.toLowerCase().includes(query) ||
         caseItem.expert?.full_name?.toLowerCase().includes(query) ||
         caseItem.assistant?.full_name?.toLowerCase().includes(query);

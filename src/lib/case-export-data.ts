@@ -1,3 +1,4 @@
+import { formatDefendantNames, formatPlaintiffNames } from "@/lib/case-parties";
 import { CASE_MILESTONES } from "@/lib/case-milestones";
 import { CASE_STATUS_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
@@ -31,8 +32,8 @@ export function buildCaseExportRows(
       "تاريخ الاجتماع": formatDate(c.meeting_date),
       "التقرير المبدئي": formatDate(c.initial_report_date),
       "التقرير النهائي": formatDate(c.final_report_date),
-      المدعي: c.plaintiff_name,
-      "المدعى عليه": c.defendant_name,
+      المدعي: formatPlaintiffNames(c.parties),
+      "المدعى عليه": formatDefendantNames(c.parties),
       المنسق: c.coordinator?.full_name ?? "—",
       الخبير: c.expert?.full_name ?? "—",
       "مساعد الخبير": c.assistant?.full_name ?? "—",

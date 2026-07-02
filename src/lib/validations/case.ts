@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { validateCaseDates, validateScheduleDates } from "@/lib/case-date-rules";
 import type { CaseMilestoneKey } from "@/lib/case-milestones";
-import type { Case } from "@/types/database";
+import type { Case, CaseParty } from "@/types/database";
 
 const optionalEmail = z
   .string()
@@ -13,6 +13,17 @@ const optionalEmail = z
 const optionalPhone = z.string().optional().or(z.literal(""));
 
 const optionalDate = z.string().optional().or(z.literal(""));
+
+export const partyFormSchema = z.object({
+  name: z.string().min(2, "الاسم مطلوب (حرفان على الأقل)"),
+  phone: optionalPhone,
+  email: optionalEmail,
+  agent_name: z.string().optional().or(z.literal("")),
+  agent_phone: optionalPhone,
+  agent_email: optionalEmail,
+});
+
+export type PartyFormValues = z.infer<typeof partyFormSchema>;
 
 export const caseFormSchema = z.object({
   case_number: z
@@ -32,17 +43,22 @@ export const caseFormSchema = z.object({
   meeting_date: optionalDate,
   initial_report_date: optionalDate,
   final_report_date: optionalDate,
-  plaintiff_name: z.string().min(2, "اسم المدعي مطلوب (حرفان على الأقل)"),
-  plaintiff_phone: optionalPhone,
-  plaintiff_email: optionalEmail,
-  defendant_name: z.string().min(2, "اسم المدعي عليه مطلوب (حرفان على الأقل)"),
-  defendant_phone: optionalPhone,
-  defendant_email: optionalEmail,
+  plaintiffs: z
+    .array(partyFormSchema)
+    .min(1, "يجب إضافة مدعي واحد على الأقل"),
+  defendants: z
+    .array(partyFormSchema)
+    .min(1, "يجب إضافة مدعي عليه واحد على الأقل"),
   coordinator_id: z.string().uuid("يجب اختيار منسق").optional().or(z.literal("")),
   expert_id: z.string().uuid().optional().or(z.literal("")),
   assistant_id: z.string().uuid().optional().or(z.literal("")),
 }).superRefine((data, ctx) => {
-  const scheduleError = validateScheduleDates(data);
+  const scheduleError = validateScheduleDates({
+    assignment_date: data.assignment_date,
+    meeting_date: data.meeting_date,
+    initial_report_date: data.initial_report_date,
+    final_report_date: data.final_report_date,
+  });
   if (scheduleError) {
     ctx.addIssue({
       code: "custom",
@@ -74,7 +90,12 @@ export function createCaseFormSchema(context?: CaseFormDateContext) {
     const dateError = validateCaseDates(merged);
     if (!dateError) return;
 
-    const scheduleError = validateScheduleDates(data);
+    const scheduleError = validateScheduleDates({
+      assignment_date: data.assignment_date,
+      meeting_date: data.meeting_date,
+      initial_report_date: data.initial_report_date,
+      final_report_date: data.final_report_date,
+    });
     ctx.addIssue({
       code: "custom",
       message: dateError,
@@ -97,3 +118,40 @@ export function emptyDate(value: string | undefined | null): string | null {
 export function emptyUuid(value: string | undefined | null): string | null {
   return value && value.trim() !== "" ? value : null;
 }
+
+export function partiesToFormValues(parties: CaseParty[] | undefined): {
+  plaintiffs: PartyFormValues[];
+  defendants: PartyFormValues[];
+} {
+  const sorted = [...(parties ?? [])].sort((a, b) => a.sort_order - b.sort_order);
+
+  const toFormParty = (party: CaseParty): PartyFormValues => ({
+    name: party.name,
+    phone: party.phone ?? "",
+    email: party.email ?? "",
+    agent_name: party.agent_name ?? "",
+    agent_phone: party.agent_phone ?? "",
+    agent_email: party.agent_email ?? "",
+  });
+
+  const plaintiffs = sorted
+    .filter((party) => party.party_type === "plaintiff")
+    .map(toFormParty);
+  const defendants = sorted
+    .filter((party) => party.party_type === "defendant")
+    .map(toFormParty);
+
+  return {
+    plaintiffs: plaintiffs.length > 0 ? plaintiffs : [{ ...emptyPartyFormValues }],
+    defendants: defendants.length > 0 ? defendants : [{ ...emptyPartyFormValues }],
+  };
+}
+
+export const emptyPartyFormValues: PartyFormValues = {
+  name: "",
+  phone: "",
+  email: "",
+  agent_name: "",
+  agent_phone: "",
+  agent_email: "",
+};

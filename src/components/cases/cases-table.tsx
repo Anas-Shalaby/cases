@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDefendantNames, formatPlaintiffNames } from "@/lib/case-parties";
 import { cn, formatDate } from "@/lib/utils";
 import type { CaseWithRelations } from "@/types/database";
 
@@ -74,11 +75,11 @@ export function CasesTable({ cases, className, canEdit = false }: CasesTableProp
                   href={`/cases/${caseItem.id}`}
                   className="hover:text-primary hover:underline"
                 >
-                  {caseItem.plaintiff_name}
+                  {formatPlaintiffNames(caseItem.parties)}
                 </Link>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {caseItem.defendant_name}
+                {formatDefendantNames(caseItem.parties)}
               </TableCell>
               <TableCell>
                 <StatusBadge status={caseItem.status} />

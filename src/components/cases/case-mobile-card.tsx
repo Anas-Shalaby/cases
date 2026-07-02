@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/cases/status-badge";
 import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatDefendantNames, formatPlaintiffNames } from "@/lib/case-parties";
 import { USER_ROLE_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import type { CaseWithRelations } from "@/types/database";
@@ -44,11 +45,15 @@ export function CaseMobileCard({
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="min-w-0">
             <p className="text-muted-foreground mb-0.5 text-xs">المدعي</p>
-            <p className="truncate font-medium">{caseItem.plaintiff_name}</p>
+            <p className="truncate font-medium">
+              {formatPlaintiffNames(caseItem.parties)}
+            </p>
           </div>
           <div className="min-w-0">
             <p className="text-muted-foreground mb-0.5 text-xs">المدعى عليه</p>
-            <p className="truncate font-medium">{caseItem.defendant_name}</p>
+            <p className="truncate font-medium">
+              {formatDefendantNames(caseItem.parties)}
+            </p>
           </div>
           {!compact && (
             <>
