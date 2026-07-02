@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { sendTomorrowMeetingReminderEmails } from "@/lib/actions/meeting-reminder-emails";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/actions/profile";
 import { canAccessNotifications } from "@/lib/notifications-access";
@@ -22,6 +23,12 @@ export async function syncDeadlineNotifications(): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("sync_deadline_notifications");
   if (error) throw new Error(error.message);
+
+  try {
+    await sendTomorrowMeetingReminderEmails();
+  } catch {
+    // لا نوقف مزامنة الإشعارات إذا فشل البريد
+  }
 }
 
 export async function getNotifications(
