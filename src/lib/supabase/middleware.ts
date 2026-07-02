@@ -32,6 +32,14 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isLoginRoute = pathname.startsWith("/login");
   const isOnboardingRoute = pathname.startsWith("/onboarding");
+  const isPublicApiRoute =
+    pathname.startsWith("/api/cron/") ||
+    (process.env.NODE_ENV !== "production" &&
+      pathname.startsWith("/api/dev/"));
+
+  if (isPublicApiRoute) {
+    return NextResponse.next();
+  }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
