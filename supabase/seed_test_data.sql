@@ -89,9 +89,9 @@ BEGIN
     )
     RETURNING id INTO v_case1;
 
-    INSERT INTO case_parties (case_id, party_type, name, phone, email, sort_order) VALUES
-        (v_case1, 'plaintiff', 'شركة النور للتجارة', '+966501234567', 'nour@example.com', 0),
-        (v_case1, 'defendant', 'مؤسسة الأمل التجارية', '+966509876543', 'amal@example.com', 0);
+    INSERT INTO case_parties (case_id, party_type, name, phones, emails, sort_order) VALUES
+        (v_case1, 'plaintiff', 'شركة النور للتجارة', ARRAY['+966501234567'], ARRAY['nour@example.com'], 0),
+        (v_case1, 'defendant', 'مؤسسة الأمل التجارية', ARRAY['+966509876543'], ARRAY['amal@example.com'], 0);
 
     INSERT INTO cases (
         case_number, case_name, status,
@@ -112,9 +112,9 @@ BEGIN
     )
     RETURNING id INTO v_case2;
 
-    INSERT INTO case_parties (case_id, party_type, name, phone, sort_order) VALUES
-        (v_case2, 'plaintiff', 'أحمد بن سعيد الغامدي', '+966551112233', 0),
-        (v_case2, 'defendant', 'محمد بن عبدالله الحربي', '+966552223344', 0);
+    INSERT INTO case_parties (case_id, party_type, name, phones, sort_order) VALUES
+        (v_case2, 'plaintiff', 'أحمد بن سعيد الغامدي', ARRAY['+966551112233'], 0),
+        (v_case2, 'defendant', 'محمد بن عبدالله الحربي', ARRAY['+966552223344'], 0);
 
     INSERT INTO cases (
         case_number, case_name, status,
@@ -140,9 +140,9 @@ BEGIN
     )
     RETURNING id INTO v_case3;
 
-    INSERT INTO case_parties (case_id, party_type, name, email, sort_order) VALUES
-        (v_case3, 'plaintiff', 'ورثة فهد بن راشد الدوسري', 'heirs@example.com', 0),
-        (v_case3, 'defendant', 'شركة البناء الحديث', 'build@example.com', 0);
+    INSERT INTO case_parties (case_id, party_type, name, emails, sort_order) VALUES
+        (v_case3, 'plaintiff', 'ورثة فهد بن راشد الدوسري', ARRAY['heirs@example.com'], 0),
+        (v_case3, 'defendant', 'شركة البناء الحديث', ARRAY['build@example.com'], 0);
 
     INSERT INTO cases (
         case_number, case_name, status,
@@ -184,9 +184,9 @@ BEGIN
     )
     RETURNING id INTO v_case5;
 
-    INSERT INTO case_parties (case_id, party_type, name, phone, sort_order) VALUES
-        (v_case5, 'plaintiff', 'بنك الرياض', '+966114000000', 0),
-        (v_case5, 'defendant', 'عبدالرحمن بن سعد القحطاني', NULL, 0);
+    INSERT INTO case_parties (case_id, party_type, name, phones, sort_order) VALUES
+        (v_case5, 'plaintiff', 'بنك الرياض', ARRAY['+966114000000'], 0),
+        (v_case5, 'defendant', 'عبدالرحمن بن سعد القحطاني', '{}', 0);
 
     INSERT INTO cases (
         case_number, case_name, status,

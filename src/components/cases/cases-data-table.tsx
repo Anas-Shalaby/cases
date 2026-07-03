@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { USER_ROLE_LABELS } from "@/lib/constants";
+import { formatContactList, sanitizeContactList } from "@/lib/case-contacts";
 import { getPartiesByType } from "@/lib/case-parties";
 import { cn, formatDate, formatDateTime } from "@/lib/utils";
 import type { CasePartyType, CaseWithRelations } from "@/types/database";
@@ -66,16 +67,28 @@ function PartiesCell({
     return <CellText value="—" muted />;
   }
 
-  const contact = items.find((party) => party.phone || party.email);
+  const contactParty = items.find(
+    (party) =>
+      sanitizeContactList(party.phones).length > 0 ||
+      sanitizeContactList(party.emails).length > 0
+  );
+  const contactText = contactParty
+    ? [
+        formatContactList(contactParty.phones),
+        formatContactList(contactParty.emails),
+      ]
+        .filter(Boolean)
+        .join(" • ")
+    : null;
 
   return (
     <div className="min-w-[180px] space-y-0.5">
       <p className="font-medium leading-snug break-words">
         {items.map((party) => party.name).join("، ")}
       </p>
-      {contact && (
+      {contactText && (
         <p className="text-muted-foreground text-xs leading-snug" dir="ltr">
-          {contact.phone || contact.email}
+          {contactText}
         </p>
       )}
     </div>

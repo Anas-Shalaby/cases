@@ -1,4 +1,28 @@
 import type { CaseParty, CasePartyType } from "@/types/database";
+import { formatContactList, sanitizeContactList } from "@/lib/case-contacts";
+
+export const ARABIC_ORDINALS = [
+  "الأول",
+  "الثاني",
+  "الثالث",
+  "الرابع",
+  "الخامس",
+  "السادس",
+  "السابع",
+  "الثامن",
+  "التاسع",
+  "العاشر",
+] as const;
+
+export function getPartyOrdinalLabel(
+  index: number,
+  total: number,
+  baseLabel: string
+): string {
+  if (total <= 1) return baseLabel;
+  const ordinal = ARABIC_ORDINALS[index] ?? String(index + 1);
+  return `${baseLabel} ${ordinal}`;
+}
 
 export function sortParties(parties: CaseParty[]): CaseParty[] {
   return [...parties].sort((a, b) => a.sort_order - b.sort_order);
@@ -36,13 +60,19 @@ export function caseMatchesPartySearch(
   if (!normalizedQuery) return true;
 
   return (parties ?? []).some((party) => {
-    return (
-      party.name.toLowerCase().includes(normalizedQuery) ||
-      party.phone?.toLowerCase().includes(normalizedQuery) ||
-      party.email?.toLowerCase().includes(normalizedQuery) ||
-      party.agent_name?.toLowerCase().includes(normalizedQuery) ||
-      party.agent_phone?.toLowerCase().includes(normalizedQuery) ||
-      party.agent_email?.toLowerCase().includes(normalizedQuery)
+    const searchable = [
+      party.name,
+      party.agent_name,
+      ...sanitizeContactList(party.phones),
+      ...sanitizeContactList(party.emails),
+      ...sanitizeContactList(party.agent_phones),
+      ...sanitizeContactList(party.agent_emails),
+    ];
+
+    return searchable.some(
+      (value) => value && value.toLowerCase().includes(normalizedQuery)
     );
   });
 }
+
+export { formatContactList };

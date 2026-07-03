@@ -32,11 +32,11 @@ export interface CaseParty {
   case_id: string;
   party_type: CasePartyType;
   name: string;
-  phone: string | null;
-  email: string | null;
+  phones: string[];
+  emails: string[];
   agent_name: string | null;
-  agent_phone: string | null;
-  agent_email: string | null;
+  agent_phones: string[];
+  agent_emails: string[];
   sort_order: number;
   created_at: string;
 }
@@ -45,6 +45,8 @@ export interface Case {
   id: string;
   case_number: string;
   case_name: string;
+  notes: string | null;
+  situation: string | null;
   status: CaseStatus;
   assignment_date: string | null;
   meeting_date: string | null;
@@ -155,6 +157,8 @@ export interface Database {
           id?: string;
           case_number: string;
           case_name: string;
+          notes?: string | null;
+          situation?: string | null;
           status?: CaseStatus;
           assignment_date?: string | null;
           meeting_date?: string | null;
@@ -176,6 +180,8 @@ export interface Database {
         Update: {
           case_number?: string;
           case_name?: string;
+          notes?: string | null;
+          situation?: string | null;
           status?: CaseStatus;
           assignment_date?: string | null;
           meeting_date?: string | null;
@@ -202,22 +208,22 @@ export interface Database {
           case_id: string;
           party_type: CasePartyType;
           name: string;
-          phone?: string | null;
-          email?: string | null;
+          phones?: string[];
+          emails?: string[];
           agent_name?: string | null;
-          agent_phone?: string | null;
-          agent_email?: string | null;
+          agent_phones?: string[];
+          agent_emails?: string[];
           sort_order?: number;
           created_at?: string;
         };
         Update: {
           party_type?: CasePartyType;
           name?: string;
-          phone?: string | null;
-          email?: string | null;
+          phones?: string[];
+          emails?: string[];
           agent_name?: string | null;
-          agent_phone?: string | null;
-          agent_email?: string | null;
+          agent_phones?: string[];
+          agent_emails?: string[];
           sort_order?: number;
         };
         Relationships: [];

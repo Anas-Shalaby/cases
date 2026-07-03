@@ -74,10 +74,27 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
 
       <Card>
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-2">
-          <DetailInfoRow label="رقم القضية" value={caseData.case_number} dir="ltr" />
+          <DetailInfoRow
+            label="رقم القضية"
+            value={caseData.case_number}
+            dir="ltr"
+          />
           <DetailInfoRow label="اسم القضية" value={caseData.case_name} />
         </CardContent>
       </Card>
+
+      {caseData.notes?.trim() && (
+        <Card>
+          <CardHeader>
+            <CardTitle>ملاحظات القضية</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {caseData.notes}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <CaseMilestonesPanel caseId={id} caseData={caseData} readOnly />
 
@@ -102,7 +119,11 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             <DateRow label="تاريخ التكليف" value={caseData.assignment_date} />
-            <DateRow label="موعد الاجتماع" value={caseData.meeting_date} datetime />
+            <DateRow
+              label="موعد الاجتماع"
+              value={caseData.meeting_date}
+              datetime
+            />
             <DateRow
               label="تاريخ التقرير الأولي"
               value={caseData.initial_report_date}
@@ -241,7 +262,7 @@ function DetailInfoRow({
         dir={dir}
       >
         {value ?? "—"}
-      </span> 
+      </span>
     </div>
   );
 }

@@ -15,10 +15,12 @@ import {
 import {
   caseFormSchema,
   emptyDate,
+  emptyNotes,
   emptyUuid,
   type CaseFormValues,
   type PartyFormValues,
 } from "@/lib/validations/case";
+import { sanitizeContactList } from "@/lib/case-contacts";
 import { normalizeMeetingDate } from "@/lib/utils";
 import type { CasePartyType, CaseWithRelations, Profile } from "@/types/database";
 
@@ -142,6 +144,7 @@ function toCasePayload(values: CaseFormValues) {
   return {
     case_number: values.case_number.trim(),
     case_name: values.case_name.trim(),
+    notes: emptyNotes(values.notes),
     status: values.status,
     assignment_date: emptyDate(values.assignment_date),
     meeting_date: normalizeMeetingDate(values.meeting_date),
@@ -162,11 +165,11 @@ function toPartyRows(
     case_id: caseId,
     party_type: partyType,
     name: party.name.trim(),
-    phone: party.phone || null,
-    email: party.email || null,
-    agent_name: party.agent_name || null,
-    agent_phone: party.agent_phone || null,
-    agent_email: party.agent_email || null,
+    phones: sanitizeContactList(party.phones),
+    emails: sanitizeContactList(party.emails),
+    agent_name: party.agent_name?.trim() || null,
+    agent_phones: sanitizeContactList(party.agent_phones),
+    agent_emails: sanitizeContactList(party.agent_emails),
     sort_order: index,
   }));
 }

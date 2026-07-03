@@ -1,5 +1,6 @@
 import type { CaseParty } from "@/types/database";
-import { getPartiesByType } from "@/lib/case-parties";
+import { formatContactList } from "@/lib/case-contacts";
+import { getPartiesByType, getPartyOrdinalLabel } from "@/lib/case-parties";
 import { Separator } from "@/components/ui/separator";
 
 function InfoRow({
@@ -37,21 +38,36 @@ function PartyBlock({
   partyLabel: string;
   agentTitle: string;
 }) {
+  const partyTitle = getPartyOrdinalLabel(index, total, partyLabel);
+  const agentSectionTitle = getPartyOrdinalLabel(index, total, agentTitle);
+
   return (
     <div className="space-y-3">
-      {total > 1 && (
-        <p className="text-sm font-medium">
-          {partyLabel} {index + 1}
-        </p>
-      )}
+      {total > 1 && <p className="text-sm font-medium">{partyTitle}</p>}
       <InfoRow label="الاسم" value={party.name} />
-      <InfoRow label="الهاتف" value={party.phone} dir="ltr" />
-      <InfoRow label="البريد الإلكتروني" value={party.email} dir="ltr" />
+      <InfoRow
+        label="أرقام الهاتف"
+        value={formatContactList(party.phones)}
+        dir="ltr"
+      />
+      <InfoRow
+        label="البريد الإلكتروني"
+        value={formatContactList(party.emails)}
+        dir="ltr"
+      />
       <Separator />
-      <p className="text-sm font-medium">{agentTitle}</p>
+      <p className="text-sm font-medium">{agentSectionTitle}</p>
       <InfoRow label="الاسم" value={party.agent_name} />
-      <InfoRow label="الهاتف" value={party.agent_phone} dir="ltr" />
-      <InfoRow label="البريد الإلكتروني" value={party.agent_email} dir="ltr" />
+      <InfoRow
+        label="أرقام الهاتف"
+        value={formatContactList(party.agent_phones)}
+        dir="ltr"
+      />
+      <InfoRow
+        label="البريد الإلكتروني"
+        value={formatContactList(party.agent_emails)}
+        dir="ltr"
+      />
     </div>
   );
 }

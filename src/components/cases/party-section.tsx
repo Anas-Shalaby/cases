@@ -8,6 +8,7 @@ import {
   useFieldArray,
 } from "react-hook-form";
 
+import { ContactListField } from "@/components/cases/contact-list-field";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { getPartyOrdinalLabel } from "@/lib/case-parties";
 import {
   emptyPartyFormValues,
   type CaseFormValues,
@@ -75,14 +77,21 @@ export function PartySection({
       <CardContent className="space-y-6">
         {fields.map((field, index) => {
           const partyErrors = sectionErrors?.[index];
-          const showPartyNumber = fields.length > 1;
+          const partyTitle = getPartyOrdinalLabel(
+            index,
+            fields.length,
+            partyLabel
+          );
+          const agentSectionTitle = getPartyOrdinalLabel(
+            index,
+            fields.length,
+            agentTitle
+          );
 
           return (
             <div key={field.id} className="space-y-4 rounded-lg border p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium">
-                  {showPartyNumber ? `${partyLabel} ${index + 1}` : partyLabel}
-                </p>
+                <p className="text-sm font-semibold">{partyTitle}</p>
                 {fields.length > 1 && (
                   <Button
                     type="button"
@@ -97,11 +106,9 @@ export function PartySection({
                 )}
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor={`${fieldName}.${index}.name`}>
-                    الاسم *
-                  </Label>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor={`${fieldName}.${index}.name`}>الاسم *</Label>
                   <Input
                     id={`${fieldName}.${index}.name`}
                     {...register(`${fieldName}.${index}.name`)}
@@ -112,39 +119,38 @@ export function PartySection({
                     </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`${fieldName}.${index}.phone`}>
-                    رقم الهاتف
-                  </Label>
-                  <Input
-                    id={`${fieldName}.${index}.phone`}
-                    dir="ltr"
-                    {...register(`${fieldName}.${index}.phone`)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`${fieldName}.${index}.email`}>
-                    البريد الإلكتروني
-                  </Label>
-                  <Input
-                    id={`${fieldName}.${index}.email`}
-                    type="email"
-                    dir="ltr"
-                    {...register(`${fieldName}.${index}.email`)}
-                  />
-                  {partyErrors?.email && (
-                    <p className="text-sm text-destructive">
-                      {partyErrors.email.message}
-                    </p>
-                  )}
-                </div>
+
+                <ContactListField
+                  control={control}
+                  register={register}
+                  name={`${fieldName}.${index}.phones`}
+                  label="أرقام الهاتف"
+                  inputType="tel"
+                  disabled={disabled}
+                />
+
+                <ContactListField
+                  control={control}
+                  register={register}
+                  name={`${fieldName}.${index}.emails`}
+                  label="البريد الإلكتروني"
+                  inputType="email"
+                  disabled={disabled}
+                />
+                {partyErrors?.emails && (
+                  <p className="text-sm text-destructive">
+                    {typeof partyErrors.emails.message === "string"
+                      ? partyErrors.emails.message
+                      : "تحقق من عناوين البريد الإلكتروني"}
+                  </p>
+                )}
               </div>
 
               <Separator />
-              <p className="text-sm font-medium">{agentTitle}</p>
+              <p className="text-sm font-semibold">{agentSectionTitle}</p>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
                   <Label htmlFor={`${fieldName}.${index}.agent_name`}>
                     الاسم
                   </Label>
@@ -153,32 +159,31 @@ export function PartySection({
                     {...register(`${fieldName}.${index}.agent_name`)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`${fieldName}.${index}.agent_phone`}>
-                    رقم الهاتف
-                  </Label>
-                  <Input
-                    id={`${fieldName}.${index}.agent_phone`}
-                    dir="ltr"
-                    {...register(`${fieldName}.${index}.agent_phone`)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`${fieldName}.${index}.agent_email`}>
-                    البريد الإلكتروني
-                  </Label>
-                  <Input
-                    id={`${fieldName}.${index}.agent_email`}
-                    type="email"
-                    dir="ltr"
-                    {...register(`${fieldName}.${index}.agent_email`)}
-                  />
-                  {partyErrors?.agent_email && (
-                    <p className="text-sm text-destructive">
-                      {partyErrors.agent_email.message}
-                    </p>
-                  )}
-                </div>
+
+                <ContactListField
+                  control={control}
+                  register={register}
+                  name={`${fieldName}.${index}.agent_phones`}
+                  label="أرقام هاتف الوكيل"
+                  inputType="tel"
+                  disabled={disabled}
+                />
+
+                <ContactListField
+                  control={control}
+                  register={register}
+                  name={`${fieldName}.${index}.agent_emails`}
+                  label="بريد الوكيل الإلكتروني"
+                  inputType="email"
+                  disabled={disabled}
+                />
+                {partyErrors?.agent_emails && (
+                  <p className="text-sm text-destructive">
+                    {typeof partyErrors.agent_emails.message === "string"
+                      ? partyErrors.agent_emails.message
+                      : "تحقق من عناوين بريد الوكيل"}
+                  </p>
+                )}
               </div>
             </div>
           );

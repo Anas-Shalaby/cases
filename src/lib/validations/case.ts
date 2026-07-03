@@ -1,27 +1,31 @@
 import { z } from "zod";
 
 import { validateCaseDates, validateScheduleDates } from "@/lib/case-date-rules";
+import { toFormContactList } from "@/lib/case-contacts";
 import { normalizeMeetingDate } from "@/lib/utils";
 import type { CaseMilestoneKey } from "@/lib/case-milestones";
 import type { Case, CaseParty } from "@/types/database";
 
-const optionalEmail = z
-  .string()
-  .email("البريد الإلكتروني غير صالح")
-  .optional()
-  .or(z.literal(""));
-
-const optionalPhone = z.string().optional().or(z.literal(""));
-
 const optionalDate = z.string().optional().or(z.literal(""));
+
+const optionalEmailEntry = z
+  .string()
+  .optional()
+  .or(z.literal(""))
+  .refine(
+    (value) => !value?.trim() || z.string().email().safeParse(value.trim()).success,
+    { message: "البريد الإلكتروني غير صالح" }
+  );
+
+const contactListSchema = z.array(z.string());
 
 export const partyFormSchema = z.object({
   name: z.string().min(2, "الاسم مطلوب (حرفان على الأقل)"),
-  phone: optionalPhone,
-  email: optionalEmail,
+  phones: contactListSchema,
+  emails: z.array(optionalEmailEntry),
   agent_name: z.string().optional().or(z.literal("")),
-  agent_phone: optionalPhone,
-  agent_email: optionalEmail,
+  agent_phones: contactListSchema,
+  agent_emails: z.array(optionalEmailEntry),
 });
 
 export type PartyFormValues = z.infer<typeof partyFormSchema>;
@@ -37,9 +41,10 @@ export const caseFormSchema = z.object({
     .min(2, "اسم القضية مطلوب (حرفان على الأقل)")
     .max(200, "اسم القضية طويل جداً")
     .transform((val) => val.trim()),
+  notes: z.string().max(5000, "الملاحظات طويلة جداً").optional().or(z.literal("")),
   status: z.enum(["open", "delayed", "closed"], {
     message: "حالة القضية مطلوبة",
-  }), 
+  }),
   assignment_date: optionalDate,
   meeting_date: optionalDate,
   initial_report_date: optionalDate,
@@ -120,6 +125,11 @@ export function emptyUuid(value: string | undefined | null): string | null {
   return value && value.trim() !== "" ? value : null;
 }
 
+export function emptyNotes(value: string | undefined | null): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
 export function partiesToFormValues(parties: CaseParty[] | undefined): {
   plaintiffs: PartyFormValues[];
   defendants: PartyFormValues[];
@@ -128,11 +138,11 @@ export function partiesToFormValues(parties: CaseParty[] | undefined): {
 
   const toFormParty = (party: CaseParty): PartyFormValues => ({
     name: party.name,
-    phone: party.phone ?? "",
-    email: party.email ?? "",
+    phones: toFormContactList(party.phones),
+    emails: toFormContactList(party.emails),
     agent_name: party.agent_name ?? "",
-    agent_phone: party.agent_phone ?? "",
-    agent_email: party.agent_email ?? "",
+    agent_phones: toFormContactList(party.agent_phones),
+    agent_emails: toFormContactList(party.agent_emails),
   });
 
   const plaintiffs = sorted
@@ -150,9 +160,9 @@ export function partiesToFormValues(parties: CaseParty[] | undefined): {
 
 export const emptyPartyFormValues: PartyFormValues = {
   name: "",
-  phone: "",
-  email: "",
+  phones: [""],
+  emails: [""],
   agent_name: "",
-  agent_phone: "",
-  agent_email: "",
+  agent_phones: [""],
+  agent_emails: [""],
 };

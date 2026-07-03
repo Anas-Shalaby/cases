@@ -1,11 +1,9 @@
-import { CasesTable } from "@/components/cases/cases-table";
+import { CaseSituationsPanel } from "@/components/dashboard/case-situations-panel";
 import { CreateCaseTaskDialog } from "@/components/dashboard/create-case-task-dialog";
 import { ImportantAppointments } from "@/components/dashboard/important-appointments";
 import { MyAssignedTasks } from "@/components/dashboard/my-assigned-tasks";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { CoordinatorAlertsBanner } from "@/components/notifications/coordinator-alerts-banner";
-import { NavButton } from "@/components/ui/nav-button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMyAssignedTasks } from "@/lib/actions/case-tasks";
 import { getCases } from "@/lib/actions/cases";
 import {
@@ -13,6 +11,7 @@ import {
   mergeScheduleEvents,
   tasksToScheduleEvents,
 } from "@/lib/case-schedule";
+import { canViewCaseSituations } from "@/lib/case-situation";
 import { getCurrentProfile } from "@/lib/actions/profile";
 import { redirect } from "next/navigation";
 
@@ -21,6 +20,7 @@ export default async function DashboardPage() {
   if (!profile) redirect("/login");
 
   const isCoordinator = profile.role === "coordinator";
+  const showSituations = canViewCaseSituations(profile.role);
   const [cases, assignedTasks] = await Promise.all([
     getCases(),
     getMyAssignedTasks(),
@@ -30,7 +30,6 @@ export default async function DashboardPage() {
     collectScheduleEvents(cases, profile.id, profile.role),
     tasksToScheduleEvents(assignedTasks, profile.id)
   );
-  const recentCases = cases.slice(0, 5);
 
   return (
     <div className="space-y-8">
@@ -44,21 +43,17 @@ export default async function DashboardPage() {
 
       {isCoordinator && <CoordinatorAlertsBanner />}
 
+      {showSituations && (
+        <CaseSituationsPanel
+          cases={cases}
+          currentUserId={profile.id}
+          currentUserRole={profile.role}
+        />
+      )}
+
       <MyAssignedTasks tasks={assignedTasks} />
 
       <ImportantAppointments events={scheduleEvents} />
-
-      <Card>
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle>أحدث القضايا</CardTitle>
-          <NavButton variant="outline" size="sm" href="/cases">
-            عرض الكل
-          </NavButton>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <CasesTable cases={recentCases} canEdit={isCoordinator} />
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 
-import { getPartiesByType } from "@/lib/case-parties";
+import { getPartiesByType, getPartyOrdinalLabel } from "@/lib/case-parties";
+import { formatContactList } from "@/lib/case-contacts";
 import { CASE_MILESTONES } from "@/lib/case-milestones";
 import { CASE_SCHEDULE_FIELDS } from "@/lib/case-date-rules";
 import { safeExportFilename } from "@/lib/case-export-data";
@@ -256,46 +257,52 @@ function addPartyBlock(
   agentTitle: string,
   party: {
     name: string;
-    phone: string | null;
-    email: string | null;
+    phones: string[];
+    emails: string[];
     agent_name: string | null;
-    agent_phone: string | null;
-    agent_email: string | null;
+    agent_phones: string[];
+    agent_emails: string[];
   },
   index: number,
   total: number
 ) {
-  const title = total > 1 ? `${partyLabel} ${index + 1}` : partyLabel;
+  const title = getPartyOrdinalLabel(index, total, partyLabel);
+  const agentSectionTitle = getPartyOrdinalLabel(index, total, agentTitle);
   addSubsectionTitle(worksheet, rowRef, title);
   addPairRow(
     worksheet,
     rowRef,
     "الاسم",
     display(party.name),
-    "رقم الهاتف",
-    display(party.phone),
+    "أرقام الهاتف",
+    display(formatContactList(party.phones)),
     { value2Dir: "ltr" }
   );
-  addKeyValueRow(worksheet, rowRef, "البريد الإلكتروني", display(party.email), {
+  addKeyValueRow(
+    worksheet,
+    rowRef,
+    "البريد الإلكتروني",
+    display(formatContactList(party.emails)),
+    {
     valueDir: "ltr",
     labelSpan: 1,
     valueSpan: 3,
   });
-  addSubsectionTitle(worksheet, rowRef, agentTitle);
+  addSubsectionTitle(worksheet, rowRef, agentSectionTitle);
   addPairRow(
     worksheet,
     rowRef,
     "اسم الوكيل",
     display(party.agent_name),
     "هاتف الوكيل",
-    display(party.agent_phone),
+    display(formatContactList(party.agent_phones)),
     { value2Dir: "ltr" }
   );
   addKeyValueRow(
     worksheet,
     rowRef,
     "بريد الوكيل",
-    display(party.agent_email),
+    display(formatContactList(party.agent_emails)),
     { valueDir: "ltr", labelSpan: 1, valueSpan: 3 }
   );
 }
@@ -371,6 +378,12 @@ export async function downloadCaseExcel(
     labelSpan: 1,
     valueSpan: 3,
   });
+  if (caseData.notes?.trim()) {
+    addKeyValueRow(worksheet, rowRef, "ملاحظات القضية", display(caseData.notes), {
+      labelSpan: 1,
+      valueSpan: 3,
+    });
+  }
   addPairRow(
     worksheet,
     rowRef,

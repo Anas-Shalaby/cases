@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -68,6 +69,7 @@ interface CaseFormProps {
 const defaultValues: CaseFormValues = {
   case_number: "",
   case_name: "",
+  notes: "",
   status: "open",
   assignment_date: "",
   meeting_date: "",
@@ -86,6 +88,7 @@ function caseToFormValues(caseData: CaseWithRelations): CaseFormValues {
   return {
     case_number: caseData.case_number,
     case_name: caseData.case_name,
+    notes: caseData.notes ?? "",
     status: caseData.status,
     assignment_date: caseData.assignment_date ?? "",
     meeting_date: toDatetimeLocalValue(caseData.meeting_date),
@@ -269,6 +272,19 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
               <p className="text-sm text-destructive">
                 {errors.case_name.message}
               </p>
+            )}
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="notes">ملاحظات القضية</Label>
+            <Textarea
+              id="notes"
+              placeholder="ملاحظات عامة عن القضية..."
+              rows={4}
+              {...register("notes")}
+            />
+            {errors.notes && (
+              <p className="text-sm text-destructive">{errors.notes.message}</p>
             )}
           </div>
 
