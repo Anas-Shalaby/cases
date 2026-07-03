@@ -1,4 +1,4 @@
--- Free-text case situation (موقف القضية) — editable by coordinators and assigned expert
+-- Free-text case situation (موقف القضية) — editable by coordinators only
 ALTER TABLE cases
     ADD COLUMN IF NOT EXISTS situation TEXT;
 

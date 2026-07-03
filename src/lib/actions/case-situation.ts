@@ -2,11 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getCurrentProfile } from "@/lib/actions/profile";
-import {
-  canEditCaseSituation,
-  canViewCaseSituations,
-} from "@/lib/case-situation";
+import { logActivity } from "@/lib/actions/activity-logs";
+import { requireCoordinator } from "@/lib/auth/require-coordinator";
 import { createClient } from "@/lib/supabase/server";
 import {
   caseSituationSchema,
@@ -14,10 +11,8 @@ import {
 } from "@/lib/validations/case-situation";
 
 export async function updateCaseSituation(caseId: string, situation: string) {
-  const profile = await getCurrentProfile();
-  if (!profile || !canViewCaseSituations(profile.role)) {
-    return { error: { _form: ["غير مصرح بتحديث موقف القضية"] } };
-  }
+  const auth = await requireCoordinator();
+  if ("error" in auth) return { error: auth.error };
 
   const parsed = caseSituationSchema.safeParse({ situation });
   if (!parsed.success) {
@@ -28,7 +23,7 @@ export async function updateCaseSituation(caseId: string, situation: string) {
 
   const { data: caseItem, error: fetchError } = await supabase
     .from("cases")
-    .select("id, expert_id")
+    .select("id, case_number, case_name, situation")
     .eq("id", caseId)
     .single();
 
@@ -36,11 +31,12 @@ export async function updateCaseSituation(caseId: string, situation: string) {
     return { error: { _form: ["القضية غير موجودة"] } };
   }
 
-  if (!canEditCaseSituation(profile.role, caseItem, profile.id)) {
-    return { error: { _form: ["غير مصرح بتحديث موقف هذه القضية"] } };
-  }
-
   const normalizedSituation = emptySituation(parsed.data.situation);
+  const previousSituation = caseItem.situation?.trim() || null;
+
+  if (previousSituation === normalizedSituation) {
+    return { success: true };
+  }
 
   const { error } = await supabase.rpc("update_case_situation", {
     p_case_id: caseId,
@@ -51,7 +47,25 @@ export async function updateCaseSituation(caseId: string, situation: string) {
     return { error: { _form: [error.message] } };
   }
 
+  const description = normalizedSituation
+    ? `عدّل موقف القضية ${caseItem.case_number}: «${normalizedSituation}»`
+    : `مسح موقف القضية ${caseItem.case_number}`;
+
+  await logActivity({
+    userId: auth.profile.id,
+    actionType: "update_case_situation",
+    caseId,
+    description,
+    metadata: {
+      case_number: caseItem.case_number,
+      case_name: caseItem.case_name,
+      old_situation: previousSituation,
+      new_situation: normalizedSituation,
+    },
+  });
+
   revalidatePath("/");
   revalidatePath(`/cases/${caseId}`);
+  revalidatePath("/activity-logs");
   return { success: true };
 }

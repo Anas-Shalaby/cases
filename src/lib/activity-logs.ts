@@ -3,6 +3,7 @@ import type { LogActionType } from "@/types/database";
 export const LOG_ACTION_LABELS: Record<LogActionType, string> = {
   create_case: "إنشاء قضية",
   update_case: "تعديل قضية",
+  update_case_situation: "تعديل موقف القضية",
   delete_case: "حذف قضية",
   create_user: "إضافة عضو",
   update_user: "تعديل عضو",
@@ -15,6 +16,8 @@ export const LOG_ACTION_COLORS: Record<LogActionType, string> = {
     "text-emerald-700 bg-emerald-50 dark:bg-emerald-950 dark:text-emerald-300",
   update_case:
     "text-blue-700 bg-blue-50 dark:bg-blue-950 dark:text-blue-300",
+  update_case_situation:
+    "text-sky-700 bg-sky-50 dark:bg-sky-950 dark:text-sky-300",
   delete_case:
     "text-red-700 bg-red-50 dark:bg-red-950 dark:text-red-300",
   create_user:
@@ -32,6 +35,7 @@ export const LOG_ACTION_FILTERS: { value: "all" | LogActionType; label: string }
     { value: "all", label: "كل الأنشطة" },
     { value: "create_case", label: LOG_ACTION_LABELS.create_case },
     { value: "update_case", label: LOG_ACTION_LABELS.update_case },
+    { value: "update_case_situation", label: LOG_ACTION_LABELS.update_case_situation },
     { value: "delete_case", label: LOG_ACTION_LABELS.delete_case },
     { value: "create_user", label: LOG_ACTION_LABELS.create_user },
     { value: "update_user", label: LOG_ACTION_LABELS.update_user },

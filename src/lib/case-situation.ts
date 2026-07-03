@@ -4,14 +4,8 @@ export function canViewCaseSituations(role: UserRole): boolean {
   return role === "coordinator" || role === "expert";
 }
 
-export function canEditCaseSituation(
-  role: UserRole,
-  caseItem: Pick<CaseWithRelations, "expert_id">,
-  userId: string
-): boolean {
-  if (role === "coordinator") return true;
-  if (role === "expert") return caseItem.expert_id === userId;
-  return false;
+export function canEditCaseSituation(role: UserRole): boolean {
+  return role === "coordinator";
 }
 
 export function filterCasesForSituationPanel(

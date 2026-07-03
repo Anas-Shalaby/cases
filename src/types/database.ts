@@ -13,6 +13,7 @@ export type CaseTaskStatus = "pending" | "completed";
 export type LogActionType =
   | "create_case"
   | "update_case"
+  | "update_case_situation"
   | "delete_case"
   | "create_user"
   | "update_user"

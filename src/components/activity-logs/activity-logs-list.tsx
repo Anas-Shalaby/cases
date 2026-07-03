@@ -50,6 +50,7 @@ export function ActivityLogsList({ logs }: ActivityLogsListProps) {
       all: logs.length,
       create_case: byType("create_case"),
       update_case: byType("update_case"),
+      update_case_situation: byType("update_case_situation"),
       delete_case: byType("delete_case"),
       create_user: byType("create_user"),
       update_user: byType("update_user"),
@@ -67,8 +68,8 @@ export function ActivityLogsList({ logs }: ActivityLogsListProps) {
           </div>
           <h3 className="text-lg font-semibold">لا توجد أنشطة مسجّلة بعد</h3>
           <p className="text-muted-foreground mt-1 max-w-sm text-sm">
-            ستظهر هنا إجراءات المنسقين: إنشاء القضايا، التعديل، إضافة الأعضاء،
-            ورفع المستندات
+            ستظهر هنا إجراءات المنسقين: إنشاء القضايا، التعديل، موقف القضية،
+            إضافة الأعضاء، ورفع المستندات
           </p>
         </CardContent>
       </Card>

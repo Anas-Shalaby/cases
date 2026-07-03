@@ -65,11 +65,7 @@ export function CaseSituationsTable({
         </TableHeader>
         <TableBody>
           {cases.map((caseItem) => {
-            const canEditSituation = canEditCaseSituation(
-              currentUserRole,
-              caseItem,
-              currentUserId,
-            );
+            const canEditSituation = canEditCaseSituation(currentUserRole);
 
             return (
               <TableRow key={caseItem.id}>
@@ -135,11 +131,7 @@ export function CaseSituationsTable({
 
       <div className="space-y-3 lg:hidden">
         {cases.map((caseItem) => {
-          const canEditSituation = canEditCaseSituation(
-            currentUserRole,
-            caseItem,
-            currentUserId,
-          );
+          const canEditSituation = canEditCaseSituation(currentUserRole);
 
           return (
             <div key={caseItem.id} className="space-y-3 rounded-lg border p-4">
