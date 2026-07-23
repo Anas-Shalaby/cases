@@ -81,13 +81,54 @@ function PartiesCell({
         .join(" • ")
     : null;
 
+  const getPartyColor = (type: CasePartyType, index: number) => {
+    if (type === "plaintiff") {
+      const colors = [
+        "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+        "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
+        "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-800",
+        "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+        "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 dark:border-fuchsia-800",
+      ];
+      return colors[index % colors.length];
+    } else {
+      const colors = [
+        "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
+        "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800",
+        "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+        "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800",
+        "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+      ];
+      return colors[index % colors.length];
+    }
+  };
+
+  const typeLabel = partyType === "plaintiff" ? "المدعي" : "المدعي عليه";
+  const getIndexLabel = (index: number) => {
+    if (items.length === 1) return typeLabel;
+    const ordinals = ["الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن", "التاسع", "العاشر"];
+    return `${typeLabel} ${ordinals[index] ?? (index + 1)}`;
+  };
+
   return (
-    <div className="min-w-[180px] space-y-0.5">
-      <p className="font-medium leading-snug break-words">
-        {items.map((party) => party.name).join("، ")}
-      </p>
+    <div className="min-w-[180px] space-y-1.5">
+      <div className="flex flex-col gap-1.5">
+        {items.map((party, index) => (
+          <div
+            key={party.id || index}
+            className={cn(
+              "rounded-md border px-2 py-1 text-xs font-medium leading-snug w-fit max-w-full break-words",
+              getPartyColor(partyType, index)
+            )}
+            title={getIndexLabel(index)}
+          >
+            <span className="opacity-70 text-[10px] ml-1.5">{getIndexLabel(index)}:</span>
+            {party.name}
+          </div>
+        ))}
+      </div>
       {contactText && (
-        <p className="text-muted-foreground text-xs leading-snug" dir="ltr">
+        <p className="text-muted-foreground text-xs leading-snug mt-1" dir="ltr">
           {contactText}
         </p>
       )}

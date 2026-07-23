@@ -234,7 +234,11 @@ export const CaseMilestonesPanel = forwardRef<
     void saveDate(key, dateValue);
   }
 
-  const completedCount = CASE_MILESTONES.filter(({ key }) => dates[key]).length;
+  const activeMilestones = CASE_MILESTONES.filter(
+    ({ key }) => !(key === "experts_notified_at" && caseData.court !== "abu_dhabi")
+  );
+
+  const completedCount = activeMilestones.filter(({ key }) => dates[key]).length;
   const hasErrors = Object.keys(fieldErrors).length > 0 || !!generalError;
 
   return (
@@ -243,7 +247,7 @@ export const CaseMilestonesPanel = forwardRef<
         <CardTitle>مراحل إنجاز القضية</CardTitle>
         <CardDescription>
           {readOnly
-            ? `تم إنجاز ${completedCount} من ${CASE_MILESTONES.length} مراحل`
+            ? `تم إنجاز ${completedCount} من ${activeMilestones.length} مراحل`
             : deferSave
               ? "عدّل المراحل والتواريخ ثم اضغط «حفظ التعديلات» — التحقق يتم عند الحفظ"
               : "ضع علامة ✓ عند إتمام كل مرحلة — عند غلق القضية تتغير حالتها إلى «مغلقة» تلقائياً"}
@@ -257,7 +261,7 @@ export const CaseMilestonesPanel = forwardRef<
         )}
 
         <ul className="divide-y rounded-lg border">
-          {CASE_MILESTONES.map(({ key, label }) => {
+          {activeMilestones.map(({ key, label }) => {
             const isDone = !!dates[key];
             const isLoading = isPending && pendingKey === key;
             const fieldError = fieldErrors[key];
