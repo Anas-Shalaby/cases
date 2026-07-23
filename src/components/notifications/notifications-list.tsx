@@ -12,15 +12,27 @@ import type { NotificationWithCase } from "@/types/database";
 
 interface NotificationsListProps {
   notifications: NotificationWithCase[];
+  total?: number;
+  currentPage?: number;
 }
 
-export function NotificationsList({ notifications }: NotificationsListProps) {
+export function NotificationsList({
+  notifications,
+  total = 0,
+  currentPage = 1,
+}: NotificationsListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
+  const totalPages = Math.ceil(total / 20);
+
   function refresh() {
     router.refresh();
+  }
+
+  function handlePageChange(newPage: number) {
+    router.push(`?page=${newPage}`);
   }
 
   function handleMarkAllRead() {
@@ -77,6 +89,30 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
           />
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+          >
+            السابق
+          </Button>
+          <span className="text-sm text-muted-foreground mx-2">
+            صفحة {currentPage} من {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+          >
+            التالي
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

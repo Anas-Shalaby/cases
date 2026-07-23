@@ -51,6 +51,8 @@ export function CasesList({
 }: CasesListProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const memberFilteredCases = useMemo(() => {
     if (expertId) {
@@ -81,6 +83,18 @@ export function CasesList({
       return matchesStatus && matchesSearch;
     });
   }, [memberFilteredCases, search, statusFilter]);
+
+  const paginatedCases = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredCases.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredCases, currentPage]);
+
+  const totalPages = Math.ceil(filteredCases.length / ITEMS_PER_PAGE);
+
+  // Reset page when filters change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter]);
 
   const counts = useMemo(
     () => ({
@@ -195,7 +209,7 @@ export function CasesList({
         </CardHeader>
         <CardContent className="p-0">
           <CasesDataTable
-            cases={filteredCases}
+            cases={paginatedCases}
             emptyMessage="لا توجد نتائج مطابقة للبحث"
             canEdit={isCoordinator}
           />
@@ -204,7 +218,7 @@ export function CasesList({
 
       {/* بطاقات — موبايل */}
       <div className="space-y-3 lg:hidden">
-        {filteredCases.length === 0 ? (
+        {paginatedCases.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">
@@ -213,11 +227,36 @@ export function CasesList({
             </CardContent>
           </Card>
         ) : (
-          filteredCases.map((caseItem) => (
+          paginatedCases.map((caseItem) => (
             <CaseMobileCard key={caseItem.id} caseItem={caseItem} canEdit={isCoordinator} />
           ))
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage <= 1}
+          >
+            السابق
+          </Button>
+          <span className="text-sm text-muted-foreground mx-2">
+            صفحة {currentPage} من {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage >= totalPages}
+          >
+            التالي
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

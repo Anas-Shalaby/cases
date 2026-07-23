@@ -13,12 +13,20 @@ const PAGE_DESCRIPTIONS = {
   assistant: "إشعاراتك وتحديثات القضايا المرتبطة بك",
 } as const;
 
-export default async function NotificationsPage() {
+interface NotificationsPageProps {
+  searchParams: Promise<{
+    page?: string;
+  }>;
+}
+
+export default async function NotificationsPage({ searchParams }: NotificationsPageProps) {
+  const { page: pageStr } = await searchParams;
+  const page = pageStr ? parseInt(pageStr, 10) : 1;
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
   if (!canAccessNotifications(profile.role)) redirect("/");
 
-  const notifications = await getNotifications();
+  const { data: notifications, total } = await getNotifications(20, { page });
   const description =
     PAGE_DESCRIPTIONS[profile.role as keyof typeof PAGE_DESCRIPTIONS] ??
     "إشعاراتك";
@@ -29,7 +37,7 @@ export default async function NotificationsPage() {
         title="التنبيهات والإشعارات"
         description={description}
       />
-      <NotificationsList notifications={notifications} />
+      <NotificationsList notifications={notifications} total={total} currentPage={page} />
     </div>
   );
 }

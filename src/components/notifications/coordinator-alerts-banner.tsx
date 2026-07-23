@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getNotifications } from "@/lib/actions/notifications";
 
 export async function CoordinatorAlertsBanner() {
-  const notifications = await getNotifications(10, { syncDeadlines: false });
+  const { data: notifications } = await getNotifications(10, { syncDeadlines: false });
   const unread = notifications.filter((n) => !n.is_read);
 
   if (unread.length === 0) return null;

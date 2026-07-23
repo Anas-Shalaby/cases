@@ -32,29 +32,37 @@ export async function syncDeadlineNotifications(): Promise<void> {
 }
 
 export async function getNotifications(
-  limit = 50,
-  options?: { syncDeadlines?: boolean }
-): Promise<NotificationWithCase[]> {
+  limit = 20,
+  options?: { syncDeadlines?: boolean; page?: number }
+): Promise<{ data: NotificationWithCase[]; total: number }> {
   const profile = await requireNotificationAccess();
 
   if (profile.role === "coordinator" && options?.syncDeadlines !== false) {
     await syncDeadlineNotifications();
   }
 
+  const page = options?.page ?? 1;
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from("notifications")
     .select(
       `
       *,
       case:cases!notifications_case_id_fkey(id, case_number, case_name)
-    `
+    `,
+      { count: "exact" }
     )
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(from, to);
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as NotificationWithCase[];
+  return {
+    data: (data ?? []) as NotificationWithCase[],
+    total: count ?? 0,
+  };
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {

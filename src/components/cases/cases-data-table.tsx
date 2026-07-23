@@ -121,23 +121,23 @@ export function CasesDataTable({
   }
 
   return (
-    <Table className={cn("min-w-[1650px] w-full table-fixed", className)}>
+    <Table className={cn("min-w-full lg:min-w-[1000px] xl:min-w-[1200px] w-full table-fixed", className)}>
       <TableHeader>
         <TableRow className="bg-muted/50 hover:bg-muted/50">
-          <TableHead className="sticky right-0 z-10 w-[150px] bg-muted/80 backdrop-blur-sm">
+          <TableHead className="sticky right-0 z-10 w-[130px] bg-muted/80 backdrop-blur-sm">
             رقم القضية
           </TableHead>
-          <TableHead className="w-[220px]">اسم القضية</TableHead>
+          <TableHead className="w-[180px] lg:w-[220px]">اسم القضية</TableHead>
           <TableHead className="w-[110px]">الحالة</TableHead>
-          <TableHead className="w-[200px]">المدعي</TableHead>
-          <TableHead className="w-[200px]">المدعي عليه</TableHead>
-          <TableHead className="w-[130px]">تاريخ التكليف</TableHead>
+          <TableHead className="w-[180px]">المدعي</TableHead>
+          <TableHead className="w-[180px]">المدعي عليه</TableHead>
+          <TableHead className="w-[130px] hidden xl:table-cell">تاريخ التكليف</TableHead>
           <TableHead className="w-[130px]">تاريخ الاجتماع</TableHead>
-          <TableHead className="w-[130px]">التقرير الأولي</TableHead>
-          <TableHead className="w-[130px]">التقرير النهائي</TableHead>
-          <TableHead className="w-[140px]">{USER_ROLE_LABELS.coordinator}</TableHead>
-          <TableHead className="w-[140px]">{USER_ROLE_LABELS.expert}</TableHead>
-          <TableHead className="w-[140px]">{USER_ROLE_LABELS.assistant}</TableHead>
+          <TableHead className="w-[130px] hidden 2xl:table-cell">التقرير الأولي</TableHead>
+          <TableHead className="w-[130px] hidden 2xl:table-cell">التقرير النهائي</TableHead>
+          <TableHead className="w-[140px] hidden 2xl:table-cell">{USER_ROLE_LABELS.coordinator}</TableHead>
+          <TableHead className="w-[140px] hidden lg:table-cell">{USER_ROLE_LABELS.expert}</TableHead>
+          <TableHead className="w-[140px] hidden xl:table-cell">{USER_ROLE_LABELS.assistant}</TableHead>
           <TableHead className="sticky left-0 z-10 w-[80px] bg-muted/80 backdrop-blur-sm">
             إجراءات
           </TableHead>
@@ -193,7 +193,7 @@ export function CasesDataTable({
               <PartiesCell parties={caseItem.parties} partyType="defendant" />
             </TableCell>
 
-            <TableCell className="align-top">
+            <TableCell className="align-top hidden xl:table-cell">
               <CellText value={formatDate(caseItem.assignment_date)} muted />
             </TableCell>
 
@@ -201,22 +201,22 @@ export function CasesDataTable({
               <CellText value={formatDateTime(caseItem.meeting_date)} muted />
             </TableCell>
 
-            <TableCell className="align-top">
+            <TableCell className="align-top hidden 2xl:table-cell">
               <CellText
                 value={formatDate(caseItem.initial_report_date)}
                 muted
               />
             </TableCell>
 
-            <TableCell className="align-top">
+            <TableCell className="align-top hidden 2xl:table-cell">
               <CellText value={formatDate(caseItem.final_report_date)} muted />
             </TableCell>
 
-            <TableCell className="align-top">
+            <TableCell className="align-top hidden 2xl:table-cell">
               <CellText value={caseItem.coordinator?.full_name} muted />
             </TableCell>
 
-            <TableCell className="align-top">
+            <TableCell className="align-top hidden lg:table-cell">
               <TeamMemberCasesLink
                 memberId={caseItem.expert_id}
                 memberName={caseItem.expert?.full_name}
@@ -225,7 +225,7 @@ export function CasesDataTable({
               />
             </TableCell>
 
-            <TableCell className="align-top">
+            <TableCell className="align-top hidden xl:table-cell">
               <TeamMemberCasesLink
                 memberId={caseItem.assistant_id}
                 memberName={caseItem.assistant?.full_name}
