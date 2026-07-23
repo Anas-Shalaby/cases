@@ -59,6 +59,28 @@ export function PartySection({
 
   const sectionErrors = errors[fieldName];
 
+  const getPartyColor = (type: "plaintiffs" | "defendants", index: number) => {
+    if (type === "plaintiffs") {
+      const colors = [
+        "border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/20",
+        "border-indigo-200 bg-indigo-50/50 dark:border-indigo-800 dark:bg-indigo-900/20",
+        "border-violet-200 bg-violet-50/50 dark:border-violet-800 dark:bg-violet-900/20",
+        "border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-900/20",
+        "border-fuchsia-200 bg-fuchsia-50/50 dark:border-fuchsia-800 dark:bg-fuchsia-900/20",
+      ];
+      return colors[index % colors.length];
+    } else {
+      const colors = [
+        "border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-900/20",
+        "border-rose-200 bg-rose-50/50 dark:border-rose-800 dark:bg-rose-900/20",
+        "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-900/20",
+        "border-pink-200 bg-pink-50/50 dark:border-pink-800 dark:bg-pink-900/20",
+        "border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20",
+      ];
+      return colors[index % colors.length];
+    }
+  };
+
   return (
     <Card className={cn(
       colorVariant === "blue" && "border-blue-200 bg-blue-50/30 dark:border-blue-900 dark:bg-blue-950/20",
@@ -95,7 +117,13 @@ export function PartySection({
           );
 
           return (
-            <div key={field.id} className="space-y-4 rounded-lg border p-4">
+            <div
+              key={field.id}
+              className={cn(
+                "space-y-4 rounded-lg border p-4",
+                getPartyColor(fieldName, index)
+              )}
+            >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold">{partyTitle}</p>
                 {fields.length > 1 && (
