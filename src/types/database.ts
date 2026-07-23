@@ -60,7 +60,6 @@ export interface Case {
   judges_meeting_date: string | null;
   case_received_at: string | null;
   parties_invited_at: string | null;
-  post_parties_invitation_at: string | null;
   experts_notified_at: string | null;
   summary_memo_uploaded_at: string | null;
   experts_meeting_at: string | null;
@@ -177,7 +176,6 @@ export interface Database {
           judges_meeting_date?: string | null;
           case_received_at?: string | null;
           parties_invited_at?: string | null;
-          post_parties_invitation_at?: string | null;
           experts_notified_at?: string | null;
           summary_memo_uploaded_at?: string | null;
           experts_meeting_at?: string | null;
@@ -205,7 +203,6 @@ export interface Database {
           judges_meeting_date?: string | null;
           case_received_at?: string | null;
           parties_invited_at?: string | null;
-          post_parties_invitation_at?: string | null;
           experts_notified_at?: string | null;
           summary_memo_uploaded_at?: string | null;
           experts_meeting_at?: string | null;

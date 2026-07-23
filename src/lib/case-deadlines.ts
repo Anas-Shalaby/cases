@@ -135,11 +135,9 @@ export function collectCaseDeadlines(
         urgency: getDeadlineUrgency(daysUntil),
       });
 
-      // تنبيه 48 ساعة لعدم إنجاز مراحل ما قبل الاجتماع
       if (type === "meeting" && !isPastDue && daysUntil <= 2) {
         const missingMilestones = [];
-        if (!caseItem.post_parties_invitation_at) missingMilestones.push("بعد دعوة الأطراف");
-        if (!caseItem.experts_notified_at) missingMilestones.push("إبلاغ لجنة الخبراء");
+        if (caseItem.court === 'abu_dhabi' && !caseItem.experts_notified_at) missingMilestones.push("إبلاغ لجنة الخبراء");
         if (!caseItem.summary_memo_uploaded_at) missingMilestones.push("المذكرة المختصرة");
 
         if (missingMilestones.length > 0) {
