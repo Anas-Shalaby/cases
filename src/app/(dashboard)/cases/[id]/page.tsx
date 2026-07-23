@@ -141,7 +141,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
               value={caseData.final_report_date}
             />
             <DateRow
-              label="ميعاد الاجتماع القادم"
+              label="ميعاد الجلسة القادم"
               value={caseData.judges_meeting_date}
             />
           </CardContent>
