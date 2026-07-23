@@ -168,6 +168,11 @@ export function CasesDataTable({
                 className="line-clamp-2 font-medium leading-snug hover:text-primary hover:underline"
               >
                 {caseItem.case_name}
+                {caseItem.case_type === "committee" && (
+                  <span className="mr-1 inline-block rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                    لجنة
+                  </span>
+                )}
               </Link>
             </TableCell>
 

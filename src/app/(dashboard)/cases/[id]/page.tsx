@@ -4,6 +4,7 @@ import { Pencil } from "lucide-react";
 import { CaseDocumentsPanel } from "@/components/cases/case-documents-panel";
 import { CaseMilestonesPanel } from "@/components/cases/case-milestones-panel";
 import { CaseTasksPanel } from "@/components/cases/case-tasks-panel";
+import { CaseTimeline } from "@/components/cases/case-timeline";
 import { DeleteCaseButton } from "@/components/cases/delete-case-button";
 import { ExportCaseButton } from "@/components/cases/export-case-button";
 import { PartiesCard } from "@/components/cases/parties-display";
@@ -20,11 +21,12 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getCaseById } from "@/lib/actions/cases";
+import { getCaseActivityLogs } from "@/lib/actions/activity-logs";
 import { getCaseDocuments } from "@/lib/actions/case-documents";
 import { getCaseTasks } from "@/lib/actions/case-tasks";
 import { getCurrentProfile } from "@/lib/actions/profile";
 import { formatCasePartiesSummary } from "@/lib/case-parties";
-import { USER_ROLE_LABELS } from "@/lib/constants";
+import { CASE_TYPE_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/utils";
 
 interface CaseDetailPageProps {
@@ -33,11 +35,12 @@ interface CaseDetailPageProps {
 
 export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   const { id } = await params;
-  const [caseData, profile, documents, tasks] = await Promise.all([
+  const [caseData, profile, documents, tasks, activityLogs] = await Promise.all([
     getCaseById(id).catch(() => null),
     getCurrentProfile(),
     getCaseDocuments(id).catch(() => []),
     getCaseTasks(id).catch(() => []),
+    getCaseActivityLogs(id).catch(() => []),
   ]);
 
   if (!caseData) notFound();
@@ -70,6 +73,11 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm text-muted-foreground">الحالة:</span>
         <StatusBadge status={caseData.status} />
+        {caseData.case_type === "committee" && (
+          <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+            {CASE_TYPE_LABELS.committee}
+          </span>
+        )}
       </div>
 
       <Card>
@@ -132,6 +140,10 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
               label="تاريخ التقرير النهائي"
               value={caseData.final_report_date}
             />
+            <DateRow
+              label="ميعاد الاجتماع القادم"
+              value={caseData.judges_meeting_date}
+            />
           </CardContent>
         </Card>
 
@@ -160,9 +172,9 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-blue-200 bg-blue-50/20 dark:border-blue-900 dark:bg-blue-950/10">
           <CardHeader>
-            <CardTitle>بيانات المدعي</CardTitle>
+            <CardTitle className="text-blue-900 dark:text-blue-200">بيانات المدعي</CardTitle>
           </CardHeader>
           <CardContent>
             <PartiesCard
@@ -175,9 +187,9 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-amber-200 bg-amber-50/20 dark:border-amber-900 dark:bg-amber-950/10">
           <CardHeader>
-            <CardTitle>بيانات المدعي عليه</CardTitle>
+            <CardTitle className="text-amber-900 dark:text-amber-200">بيانات المدعي عليه</CardTitle>
           </CardHeader>
           <CardContent>
             <PartiesCard
@@ -190,6 +202,8 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           </CardContent>
         </Card>
       </div>
+
+      <CaseTimeline logs={activityLogs} />
     </div>
   );
 }

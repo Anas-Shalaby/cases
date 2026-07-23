@@ -48,16 +48,17 @@ export function ScheduleEventItem({
       <NavLink
         href={`/cases/${event.caseId}`}
         className={cn(
-          "block font-medium hover:text-primary hover:underline",
+          "block font-mono font-bold text-primary hover:underline",
           compact ? "text-xs leading-snug" : "text-sm"
         )}
+        dir="ltr"
       >
-        {event.caseName}
+        {event.caseNumber}
       </NavLink>
 
       {!compact && (
-        <p className="text-muted-foreground mt-0.5 text-[11px]" dir="ltr">
-          {event.caseNumber}
+        <p className="text-muted-foreground mt-0.5 text-[11px] line-clamp-1">
+          {event.caseName}
         </p>
       )}
 

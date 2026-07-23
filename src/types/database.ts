@@ -1,5 +1,6 @@
 export type UserRole = "coordinator" | "expert" | "assistant";
 export type CaseStatus = "open" | "delayed" | "closed";
+export type CaseType = "individual" | "committee";
 export type CasePartyType = "plaintiff" | "defendant";
 export type NotificationType =
   | "report_deadline"
@@ -49,12 +50,17 @@ export interface Case {
   notes: string | null;
   situation: string | null;
   status: CaseStatus;
+  case_type: CaseType;
   assignment_date: string | null;
   meeting_date: string | null;
   initial_report_date: string | null;
   final_report_date: string | null;
+  judges_meeting_date: string | null;
   case_received_at: string | null;
   parties_invited_at: string | null;
+  post_parties_invitation_at: string | null;
+  experts_notified_at: string | null;
+  summary_memo_uploaded_at: string | null;
   experts_meeting_at: string | null;
   defendant_documents_received_at: string | null;
   plaintiff_documents_received_at: string | null;
@@ -161,12 +167,17 @@ export interface Database {
           notes?: string | null;
           situation?: string | null;
           status?: CaseStatus;
+          case_type?: CaseType;
           assignment_date?: string | null;
           meeting_date?: string | null;
           initial_report_date?: string | null;
           final_report_date?: string | null;
+          judges_meeting_date?: string | null;
           case_received_at?: string | null;
           parties_invited_at?: string | null;
+          post_parties_invitation_at?: string | null;
+          experts_notified_at?: string | null;
+          summary_memo_uploaded_at?: string | null;
           experts_meeting_at?: string | null;
           defendant_documents_received_at?: string | null;
           plaintiff_documents_received_at?: string | null;
@@ -184,12 +195,17 @@ export interface Database {
           notes?: string | null;
           situation?: string | null;
           status?: CaseStatus;
+          case_type?: CaseType;
           assignment_date?: string | null;
           meeting_date?: string | null;
           initial_report_date?: string | null;
           final_report_date?: string | null;
+          judges_meeting_date?: string | null;
           case_received_at?: string | null;
           parties_invited_at?: string | null;
+          post_parties_invitation_at?: string | null;
+          experts_notified_at?: string | null;
+          summary_memo_uploaded_at?: string | null;
           experts_meeting_at?: string | null;
           defendant_documents_received_at?: string | null;
           plaintiff_documents_received_at?: string | null;
@@ -318,6 +334,7 @@ export interface Database {
     Enums: {
       user_role: UserRole;
       case_status: CaseStatus;
+      case_type: CaseType;
       case_party_type: CasePartyType;
       case_task_status: CaseTaskStatus;
       notification_type: NotificationType;

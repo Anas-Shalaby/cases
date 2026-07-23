@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { getPartyOrdinalLabel } from "@/lib/case-parties";
+import { cn } from "@/lib/utils";
 import {
   emptyPartyFormValues,
   type CaseFormValues,
@@ -36,6 +37,7 @@ interface PartySectionProps {
   register: UseFormRegister<CaseFormValues>;
   errors: FieldErrors<CaseFormValues>;
   disabled?: boolean;
+  colorVariant?: "blue" | "amber";
 }
 
 export function PartySection({
@@ -48,6 +50,7 @@ export function PartySection({
   register,
   errors,
   disabled = false,
+  colorVariant,
 }: PartySectionProps) {
   const { fields, append, remove } = useFieldArray({
     control,
@@ -57,7 +60,10 @@ export function PartySection({
   const sectionErrors = errors[fieldName];
 
   return (
-    <Card>
+    <Card className={cn(
+      colorVariant === "blue" && "border-blue-200 bg-blue-50/30 dark:border-blue-900 dark:bg-blue-950/20",
+      colorVariant === "amber" && "border-amber-200 bg-amber-50/30 dark:border-amber-900 dark:bg-amber-950/20",
+    )}>
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
         <div className="space-y-1.5">
           <CardTitle>{title}</CardTitle>

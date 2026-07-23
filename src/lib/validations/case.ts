@@ -45,10 +45,12 @@ export const caseFormSchema = z.object({
   status: z.enum(["open", "delayed", "closed"], {
     message: "حالة القضية مطلوبة",
   }),
+  case_type: z.enum(["individual", "committee"]),
   assignment_date: optionalDate,
   meeting_date: optionalDate,
   initial_report_date: optionalDate,
   final_report_date: optionalDate,
+  judges_meeting_date: optionalDate,
   plaintiffs: z
     .array(partyFormSchema)
     .min(1, "يجب إضافة مدعي واحد على الأقل"),

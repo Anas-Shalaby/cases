@@ -89,6 +89,9 @@ function validateMilestoneAgainstSchedule(
 ): string | null {
   const pairs: { milestone: CaseMilestoneKey; schedule: CaseScheduleField; scheduleLabel: string }[] = [
     { milestone: "experts_meeting_at", schedule: "meeting_date", scheduleLabel: "موعد الاجتماع" },
+    { milestone: "post_parties_invitation_at", schedule: "meeting_date", scheduleLabel: "موعد الاجتماع" },
+    { milestone: "experts_notified_at", schedule: "meeting_date", scheduleLabel: "موعد الاجتماع" },
+    { milestone: "summary_memo_uploaded_at", schedule: "meeting_date", scheduleLabel: "موعد الاجتماع" },
     {
       milestone: "initial_report_prepared_at",
       schedule: "initial_report_date",

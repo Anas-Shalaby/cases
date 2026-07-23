@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { CASE_STATUS_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
+import { CASE_STATUS_LABELS, CASE_TYPE_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { toDatetimeLocalValue } from "@/lib/utils";
 import {
   createCaseFormSchema,
@@ -71,10 +71,12 @@ const defaultValues: CaseFormValues = {
   case_name: "",
   notes: "",
   status: "open",
+  case_type: "individual",
   assignment_date: "",
   meeting_date: "",
   initial_report_date: "",
   final_report_date: "",
+  judges_meeting_date: "",
   plaintiffs: [{ ...emptyPartyFormValues }],
   defendants: [{ ...emptyPartyFormValues }],
   coordinator_id: "",
@@ -90,10 +92,12 @@ function caseToFormValues(caseData: CaseWithRelations): CaseFormValues {
     case_name: caseData.case_name,
     notes: caseData.notes ?? "",
     status: caseData.status,
+    case_type: caseData.case_type ?? "individual",
     assignment_date: caseData.assignment_date ?? "",
     meeting_date: toDatetimeLocalValue(caseData.meeting_date),
     initial_report_date: caseData.initial_report_date ?? "",
     final_report_date: caseData.final_report_date ?? "",
+    judges_meeting_date: caseData.judges_meeting_date ?? "",
     plaintiffs,
     defendants,
     coordinator_id: caseData.coordinator_id ?? "",
@@ -185,6 +189,7 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
   }, [isPending, onPendingChange]);
 
   const status = watch("status");
+  const caseType = watch("case_type");
   const coordinatorId = watch("coordinator_id");
   const expertId = watch("expert_id");
   const assistantId = watch("assistant_id");
@@ -315,6 +320,32 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="case_type">نوع القضية</Label>
+            <Select
+              value={caseType}
+              onValueChange={(value) =>
+                setValue("case_type", (value ?? "individual") as CaseFormValues["case_type"])
+              }
+            >
+              <SelectTrigger id="case_type" className="w-full">
+                <SelectValue placeholder="اختر النوع">
+                  {CASE_TYPE_LABELS[caseType]}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(CASE_TYPE_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.case_type && (
+              <p className="text-sm text-destructive">{errors.case_type.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="assignment_date">تاريخ التكليف</Label>
             <Input id="assignment_date" type="date" {...register("assignment_date")} />
             {errors.assignment_date && (
@@ -362,6 +393,21 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
               </p>
             )}
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="judges_meeting_date">ميعاد الاجتماع القادم</Label>
+            <Input
+              id="judges_meeting_date"
+              type="date"
+              {...register("judges_meeting_date")}
+              className="font-mono text-sm"
+              dir="ltr"
+            />
+            {errors.judges_meeting_date && (
+              <p className="text-sm text-destructive">
+                {errors.judges_meeting_date.message}
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -375,6 +421,7 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
         register={register}
         errors={errors}
         disabled={isPending}
+        colorVariant="blue"
       />
 
       <PartySection
@@ -387,6 +434,7 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
         register={register}
         errors={errors}
         disabled={isPending}
+        colorVariant="amber"
       />
 
       <Card>

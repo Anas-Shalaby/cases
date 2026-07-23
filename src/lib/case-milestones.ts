@@ -1,6 +1,12 @@
 export const CASE_MILESTONES = [
   { key: "case_received_at", label: "استلام القضية" },
   { key: "parties_invited_at", label: "دعوة الأطراف" },
+  { key: "post_parties_invitation_at", label: "بعد دعوة الأطراف" },
+  { key: "experts_notified_at", label: "إبلاغ لجنة الخبراء بميعاد الاجتماع" },
+  {
+    key: "summary_memo_uploaded_at",
+    label: "رفع مذكرة المختصرة لأعمال الخبرة للمحكمة",
+  },
   { key: "experts_meeting_at", label: "اجتماع الخبراء" },
   {
     key: "defendant_documents_received_at",
@@ -18,3 +24,10 @@ export const CASE_MILESTONES = [
 export type CaseMilestoneKey = (typeof CASE_MILESTONES)[number]["key"];
 
 export const CASE_MILESTONE_KEYS = CASE_MILESTONES.map((m) => m.key);
+
+/** المراحل التي يجب أن تكون قبل ميعاد الاجتماع */
+export const PRE_MEETING_MILESTONES: CaseMilestoneKey[] = [
+  "post_parties_invitation_at",
+  "experts_notified_at",
+  "summary_memo_uploaded_at",
+];

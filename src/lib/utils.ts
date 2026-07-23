@@ -56,9 +56,16 @@ export function normalizeMeetingDate(
   if (trimmed.includes("T")) {
     const parsed = new Date(trimmed);
     if (Number.isNaN(parsed.getTime())) return null;
-    return parsed.toISOString();
+    // Preserve local time by building ISO string with timezone offset
+    const tzOffset = -parsed.getTimezoneOffset();
+    const sign = tzOffset >= 0 ? "+" : "-";
+    const absOffset = Math.abs(tzOffset);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const offsetStr = `${sign}${pad(Math.floor(absOffset / 60))}:${pad(absOffset % 60)}`;
+    const iso = `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}:${pad(parsed.getSeconds())}${offsetStr}`;
+    return iso;
   }
-  return new Date(`${trimmed}T12:00:00`).toISOString();
+  return `${trimmed}T12:00:00`;
 }
 
 export function formatRelativeTime(date: string): string {

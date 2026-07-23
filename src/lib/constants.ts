@@ -1,9 +1,14 @@
-import type { CaseStatus, UserRole } from "@/types/database";
+import type { CaseStatus, CaseType, UserRole } from "@/types/database";
 
 export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   open: "مفتوحة",
   delayed: "متأخرة",
   closed: "مغلقة",
+};
+
+export const CASE_TYPE_LABELS: Record<CaseType, string> = {
+  individual: "فردي",
+  committee: "لجنة",
 };
 
 export const USER_ROLE_LABELS: Record<UserRole, string> = {

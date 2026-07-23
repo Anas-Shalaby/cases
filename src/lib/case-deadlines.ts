@@ -22,7 +22,7 @@ export interface DashboardOverview {
   teamCount?: number;
 }
 
-export type DeadlineType = "meeting" | "initial_report" | "final_report";
+export type DeadlineType = "meeting" | "initial_report" | "final_report" | "pre_meeting_milestone";
 
 export type DeadlineUrgency = "past_due" | "urgent" | "upcoming";
 
@@ -45,6 +45,7 @@ export const DEADLINE_LABELS: Record<DeadlineType, string> = {
   meeting: "موعد الاجتماع",
   initial_report: "التقرير المبدئي",
   final_report: "التقرير النهائي",
+  pre_meeting_milestone: "نواقص ما قبل الاجتماع",
 };
 
 const DEADLINE_FIELDS: {
@@ -133,6 +134,29 @@ export function collectCaseDeadlines(
         isLate,
         urgency: getDeadlineUrgency(daysUntil),
       });
+
+      // تنبيه 48 ساعة لعدم إنجاز مراحل ما قبل الاجتماع
+      if (type === "meeting" && !isPastDue && daysUntil <= 2) {
+        const missingMilestones = [];
+        if (!caseItem.post_parties_invitation_at) missingMilestones.push("بعد دعوة الأطراف");
+        if (!caseItem.experts_notified_at) missingMilestones.push("إبلاغ لجنة الخبراء");
+        if (!caseItem.summary_memo_uploaded_at) missingMilestones.push("المذكرة المختصرة");
+
+        if (missingMilestones.length > 0) {
+          deadlines.push({
+            caseId: caseItem.id,
+            caseNumber: caseItem.case_number,
+            caseName: caseItem.case_name,
+            deadlineType: "pre_meeting_milestone",
+            deadlineDate: dateOnly,
+            label: `نواقص الاجتماع: ${missingMilestones.join("، ")}`,
+            daysUntil,
+            isPastDue: false,
+            isLate: true,
+            urgency: "urgent",
+          });
+        }
+      }
     }
   }
 

@@ -54,3 +54,25 @@ export async function getActivityLogs(
   if (error) throw new Error(error.message);
   return (data ?? []) as ActivityLogWithRelations[];
 }
+
+export async function getCaseActivityLogs(
+  caseId: string,
+  limit = 50
+): Promise<ActivityLogWithRelations[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("activity_logs")
+    .select(
+      `
+      *,
+      actor:profiles!activity_logs_user_id_fkey(id, full_name),
+      case:cases!activity_logs_case_id_fkey(id, case_number, case_name)
+    `
+    )
+    .eq("case_id", caseId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ActivityLogWithRelations[];
+}
