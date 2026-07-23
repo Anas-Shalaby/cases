@@ -1,7 +1,7 @@
 import { NewCaseButton } from "@/components/cases/new-case-button";
 
 interface DashboardHeaderProps {
-  title: string;
+  title: React.ReactNode;
   description?: string;
   showNewCase?: boolean;
 }

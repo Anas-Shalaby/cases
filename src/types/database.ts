@@ -1,6 +1,7 @@
 export type UserRole = "coordinator" | "expert" | "assistant";
 export type CaseStatus = "open" | "delayed" | "closed";
 export type CaseType = "individual" | "committee";
+export type CourtType = "dubai" | "abu_dhabi" | "federal";
 export type CasePartyType = "plaintiff" | "defendant";
 export type NotificationType =
   | "report_deadline"
@@ -51,6 +52,7 @@ export interface Case {
   situation: string | null;
   status: CaseStatus;
   case_type: CaseType;
+  court: CourtType | null;
   assignment_date: string | null;
   meeting_date: string | null;
   initial_report_date: string | null;

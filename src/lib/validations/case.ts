@@ -46,6 +46,7 @@ export const caseFormSchema = z.object({
     message: "حالة القضية مطلوبة",
   }),
   case_type: z.enum(["individual", "committee"]),
+  court: z.enum(["dubai", "abu_dhabi", "federal"]).nullable().optional(),
   assignment_date: optionalDate,
   meeting_date: optionalDate,
   initial_report_date: optionalDate,

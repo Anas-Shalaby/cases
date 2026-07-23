@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { USER_ROLE_LABELS } from "@/lib/constants";
+import { COURT_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { formatContactList, sanitizeContactList } from "@/lib/case-contacts";
 import { getPartiesByType } from "@/lib/case-parties";
 import { cn, formatDate, formatDateTime } from "@/lib/utils";
@@ -171,6 +171,11 @@ export function CasesDataTable({
                 {caseItem.case_type === "committee" && (
                   <span className="mr-1 inline-block rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                     لجنة
+                  </span>
+                )}
+                {caseItem.court && (
+                  <span className="mr-1 inline-block rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                    {COURT_LABELS[caseItem.court]}
                   </span>
                 )}
               </Link>

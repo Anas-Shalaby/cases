@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { CASE_STATUS_LABELS, CASE_TYPE_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
+import { CASE_STATUS_LABELS, CASE_TYPE_LABELS, COURT_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { toDatetimeLocalValue } from "@/lib/utils";
 import {
   createCaseFormSchema,
@@ -277,6 +277,34 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
               <p className="text-sm text-destructive">
                 {errors.case_name.message}
               </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="court">المحكمة التابعة لها</Label>
+            <Select
+              value={form.watch("court") ?? ""}
+              onValueChange={(val: any) =>
+                form.setValue("court", val || null, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                })
+              }
+            >
+              <SelectTrigger id="court" className="bg-background">
+                <SelectValue placeholder="اختر المحكمة (اختياري)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">بدون محكمة محددة</SelectItem>
+                {Object.entries(COURT_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.court && (
+              <p className="text-sm text-destructive">{errors.court.message}</p>
             )}
           </div>
 

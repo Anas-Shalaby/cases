@@ -26,7 +26,7 @@ import { getCaseDocuments } from "@/lib/actions/case-documents";
 import { getCaseTasks } from "@/lib/actions/case-tasks";
 import { getCurrentProfile } from "@/lib/actions/profile";
 import { formatCasePartiesSummary } from "@/lib/case-parties";
-import { CASE_TYPE_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
+import { CASE_TYPE_LABELS, COURT_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/utils";
 
 interface CaseDetailPageProps {
@@ -51,7 +51,16 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <DashboardHeader
-          title={caseData.case_name}
+          title={
+            <div className="flex items-center gap-2">
+              <span>{caseData.case_name}</span>
+              {caseData.court && (
+                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                  {COURT_LABELS[caseData.court]}
+                </span>
+              )}
+            </div>
+          }
           description={`${caseData.case_number} — ${formatCasePartiesSummary(caseData.parties)} · ${formatDate(caseData.created_at)}`}
         />
         <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">

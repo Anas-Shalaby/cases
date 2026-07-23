@@ -1,4 +1,4 @@
-import type { CaseStatus, CaseType, UserRole } from "@/types/database";
+import type { CaseStatus, CaseType, CourtType, UserRole } from "@/types/database";
 
 export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
   open: "مفتوحة",
@@ -9,6 +9,12 @@ export const CASE_STATUS_LABELS: Record<CaseStatus, string> = {
 export const CASE_TYPE_LABELS: Record<CaseType, string> = {
   individual: "فردي",
   committee: "لجنة",
+};
+
+export const COURT_LABELS: Record<CourtType, string> = {
+  dubai: "دبي",
+  abu_dhabi: "أبو ظبي",
+  federal: "الاتحادية",
 };
 
 export const USER_ROLE_LABELS: Record<UserRole, string> = {

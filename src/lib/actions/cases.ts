@@ -147,6 +147,7 @@ function toCasePayload(values: CaseFormValues) {
     notes: emptyNotes(values.notes),
     status: values.status,
     case_type: values.case_type ?? "individual",
+    court: values.court ?? null,
     assignment_date: emptyDate(values.assignment_date),
     meeting_date: normalizeMeetingDate(values.meeting_date),
     initial_report_date: emptyDate(values.initial_report_date),
