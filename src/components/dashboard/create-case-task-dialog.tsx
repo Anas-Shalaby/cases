@@ -135,7 +135,11 @@ export function CreateCaseTaskDialog({
                 disabled={isPending}
               >
                 <SelectTrigger id="task-case" className="w-full">
-                  <SelectValue placeholder="اختر القضية" />
+                  {caseId && selectedCase ? (
+                    `${selectedCase.case_name} (${selectedCase.case_number})`
+                  ) : (
+                    <SelectValue placeholder="اختر القضية" />
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   {activeCases.map((caseItem) => (

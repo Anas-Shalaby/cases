@@ -86,10 +86,10 @@ const ACTION_CONFIG: Record<
   },
 };
 
-function MetadataChanges({ metadata }: { metadata: Record<string, unknown> | null }) {
+function MetadataChanges({ metadata, date }: { metadata: Record<string, unknown> | null; date: string }) {
   if (!metadata) return null;
 
-  const changes: { label: string; from: string; to: string }[] = [];
+  const changes: { label: string; from: string; to: string; date?: string }[] = [];
 
   if (metadata.old_status && metadata.new_status) {
     const oldLabel =
@@ -109,6 +109,7 @@ function MetadataChanges({ metadata }: { metadata: Record<string, unknown> | nul
       label: "موقف القضية",
       from: (metadata.old_situation as string) || "—",
       to: (metadata.new_situation as string) || "— (تم المسح)",
+      date: formatDate(date),
     });
   }
 
@@ -134,6 +135,11 @@ function MetadataChanges({ metadata }: { metadata: Record<string, unknown> | nul
               <span className="rounded bg-emerald-50 px-1.5 py-0.5 font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                 {change.to}
               </span>
+              {change.date && (
+                <span className="mr-2 text-[11px] text-muted-foreground">
+                  ({change.date})
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -188,7 +194,7 @@ function TimelineEntry({ log }: { log: ActivityLogWithRelations }) {
           </p>
         )}
 
-        <MetadataChanges metadata={log.metadata} />
+        <MetadataChanges metadata={log.metadata} date={log.created_at} />
       </div>
     </div>
   );

@@ -422,7 +422,7 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
             )}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="judges_meeting_date">ميعاد الاجتماع القادم</Label>
+            <Label htmlFor="judges_meeting_date">ميعاد الجلسة القادم</Label>
             <Input
               id="judges_meeting_date"
               type="date"

@@ -169,15 +169,14 @@ export function CasesDataTable({
             رقم القضية
           </TableHead>
           <TableHead className="w-[180px] lg:w-[220px]">اسم القضية</TableHead>
+          <TableHead className="w-[140px] lg:table-cell">{USER_ROLE_LABELS.expert}</TableHead>
+          <TableHead className="w-[180px]">موقف القضية</TableHead>
           <TableHead className="w-[110px]">الحالة</TableHead>
-          <TableHead className="w-[180px]">المدعي</TableHead>
-          <TableHead className="w-[180px]">المدعي عليه</TableHead>
           <TableHead className="w-[130px] hidden xl:table-cell">تاريخ التكليف</TableHead>
           <TableHead className="w-[130px]">تاريخ الاجتماع</TableHead>
           <TableHead className="w-[130px] hidden 2xl:table-cell">التقرير الأولي</TableHead>
           <TableHead className="w-[130px] hidden 2xl:table-cell">التقرير النهائي</TableHead>
           <TableHead className="w-[140px] hidden 2xl:table-cell">{USER_ROLE_LABELS.coordinator}</TableHead>
-          <TableHead className="w-[140px] hidden lg:table-cell">{USER_ROLE_LABELS.expert}</TableHead>
           <TableHead className="w-[140px] hidden xl:table-cell">{USER_ROLE_LABELS.assistant}</TableHead>
           <TableHead className="sticky left-0 z-10 w-[80px] bg-muted/80 backdrop-blur-sm">
             إجراءات
@@ -222,16 +221,21 @@ export function CasesDataTable({
               </Link>
             </TableCell>
 
+            <TableCell className="align-top lg:table-cell">
+              <TeamMemberCasesLink
+                memberId={caseItem.expert_id}
+                memberName={caseItem.expert?.full_name}
+                role="expert"
+                muted
+              />
+            </TableCell>
+
+            <TableCell className="align-top">
+              <span className="line-clamp-2 text-sm text-muted-foreground whitespace-pre-wrap">{caseItem.situation || "—"}</span>
+            </TableCell>
+
             <TableCell className="align-top">
               <StatusBadge status={caseItem.status} />
-            </TableCell>
-
-            <TableCell className="align-top">
-              <PartiesCell parties={caseItem.parties} partyType="plaintiff" />
-            </TableCell>
-
-            <TableCell className="align-top">
-              <PartiesCell parties={caseItem.parties} partyType="defendant" />
             </TableCell>
 
             <TableCell className="align-top hidden xl:table-cell">
@@ -255,15 +259,6 @@ export function CasesDataTable({
 
             <TableCell className="align-top hidden 2xl:table-cell">
               <CellText value={caseItem.coordinator?.full_name} muted />
-            </TableCell>
-
-            <TableCell className="align-top hidden lg:table-cell">
-              <TeamMemberCasesLink
-                memberId={caseItem.expert_id}
-                memberName={caseItem.expert?.full_name}
-                role="expert"
-                muted
-              />
             </TableCell>
 
             <TableCell className="align-top hidden xl:table-cell">

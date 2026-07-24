@@ -11,6 +11,13 @@ import { Button } from "@/components/ui/button";
 import { NavButton } from "@/components/ui/nav-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CASE_STATUS_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { caseMatchesPartySearch } from "@/lib/case-parties";
 import { getCasesWithLateDeadlines, isCaseLate } from "@/lib/case-deadlines";
@@ -51,8 +58,19 @@ export function CasesList({
 }: CasesListProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
+  const [selectedExpertFilter, setSelectedExpertFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
+
+  const uniqueExperts = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    cases.forEach((c) => {
+      if (c.expert_id && c.expert) {
+        map.set(c.expert_id, { id: c.expert_id, name: c.expert.full_name });
+      }
+    });
+    return Array.from(map.values());
+  }, [cases]);
 
   const memberFilteredCases = useMemo(() => {
     if (expertId) {
@@ -67,6 +85,7 @@ export function CasesList({
   const filteredCases = useMemo(() => {
     const query = search.trim().toLowerCase();
     return memberFilteredCases.filter((caseItem) => {
+      const matchesExpert = selectedExpertFilter === "all" || caseItem.expert_id === selectedExpertFilter;
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "delayed"
@@ -80,9 +99,9 @@ export function CasesList({
         caseItem.coordinator?.full_name?.toLowerCase().includes(query) ||
         caseItem.expert?.full_name?.toLowerCase().includes(query) ||
         caseItem.assistant?.full_name?.toLowerCase().includes(query);
-      return matchesStatus && matchesSearch;
+      return matchesStatus && matchesSearch && matchesExpert;
     });
-  }, [memberFilteredCases, search, statusFilter]);
+  }, [memberFilteredCases, search, statusFilter, selectedExpertFilter]);
 
   const paginatedCases = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -157,14 +176,31 @@ export function CasesList({
 
       <Card>
         <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
-            <Input
-              placeholder="بحث برقم القضية، الاسم، الأطراف..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pr-9"
-            />
+          <div className="flex w-full flex-col gap-3 sm:max-w-md sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+              <Input
+                placeholder="بحث برقم القضية، الاسم، الأطراف..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pr-9"
+              />
+            </div>
+            {!expertId && uniqueExperts.length > 0 && (
+              <Select value={selectedExpertFilter} onValueChange={setSelectedExpertFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="تصفية بالخبير" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">الكل (الخبراء)</SelectItem>
+                  {uniqueExperts.map((exp) => (
+                    <SelectItem key={exp.id} value={exp.id}>
+                      {exp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
             <div className="flex flex-wrap gap-2">
