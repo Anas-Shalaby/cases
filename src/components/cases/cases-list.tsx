@@ -187,7 +187,7 @@ export function CasesList({
               />
             </div>
             {!expertId && uniqueExperts.length > 0 && (
-              <Select value={selectedExpertFilter} onValueChange={setSelectedExpertFilter}>
+              <Select value={selectedExpertFilter} onValueChange={(val) => setSelectedExpertFilter(val || "all")}>
                 <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="تصفية بالخبير" />
                 </SelectTrigger>
