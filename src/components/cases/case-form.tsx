@@ -75,6 +75,7 @@ const defaultValues: CaseFormValues = {
   case_number: "",
   case_name: "",
   notes: "",
+  court: "dubai",
   status: "open",
   case_type: "individual",
   assignment_date: "",
