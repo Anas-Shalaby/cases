@@ -8,7 +8,7 @@ import { ScheduleDayDialog } from "@/components/schedule/schedule-day-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ARABIC_WEEKDAYS_SHORT,
+  ARABIC_WEEKDAYS,
   buildMonthCalendar,
   formatMonthYear,
   monthParam,
@@ -161,7 +161,7 @@ export function ScheduleCalendar({
           </p>
 
           <div className="mb-2 grid grid-cols-7 gap-2">
-            {ARABIC_WEEKDAYS_SHORT.map((day) => (
+            {ARABIC_WEEKDAYS.map((day) => (
               <div
                 key={day}
                 className="text-muted-foreground py-1 text-center text-xs font-medium"

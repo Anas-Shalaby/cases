@@ -63,11 +63,6 @@ const DEADLINE_FIELDS: {
     type: "initial_report",
     milestoneField: "initial_report_prepared_at",
   },
-  {
-    field: "final_report_date",
-    type: "final_report",
-    milestoneField: "final_report_prepared_at",
-  },
 ];
 
 function getDeadlineLabel(type: DeadlineType, rawDate: string): string {

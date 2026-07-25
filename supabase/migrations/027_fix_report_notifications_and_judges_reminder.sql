@@ -235,31 +235,11 @@ BEGIN
                 END IF;
             END IF;
 
-            -- 4) التقرير النهائي (يُفحص فقط إذا لم يكن مُعدّاً بالفعل)
-            IF r.final_report_prepared_at IS NOT NULL THEN
-                -- التقرير النهائي مكتمل: حذف أي تنبيهات غير مقروءة للتقرير النهائي
-                DELETE FROM notifications
-                WHERE case_id = r.id
-                  AND type = 'report_deadline'
-                  AND title LIKE '%التقرير النهائي%';
-            ELSIF r.final_report_date IS NOT NULL THEN
-                days_until := (r.final_report_date::date) - CURRENT_DATE;
-                IF days_until BETWEEN -1 AND 3 THEN
-                    IF days_until < 0 THEN
-                        v_title := 'تأخر التقرير النهائي';
-                        v_message := 'موعد التقرير النهائي للقضية ' || r.case_number || ' قد انتهى.';
-                    ELSIF days_until = 0 THEN
-                        v_title := 'موعد التقرير النهائي اليوم';
-                        v_message := 'التقرير النهائي للقضية ' || r.case_number || ' مستحق اليوم.';
-                    ELSE
-                        v_title := 'اقتراب موعد التقرير النهائي';
-                        v_message := 'التقرير النهائي للقضية ' || r.case_number || ' خلال ' || days_until || ' أيام.';
-                    END IF;
-                    PERFORM public.notify_case_coordinators(
-                        r.id, 'report_deadline', v_title, v_message
-                    );
-                END IF;
-            END IF;
+            -- 4) إلغاء تنبيهات التقرير النهائي بالكامل وحذف أي إشعارات مرسلة سابقة له
+            DELETE FROM notifications
+            WHERE case_id = r.id
+              AND type = 'report_deadline'
+              AND title LIKE '%التقرير النهائي%';
 
         END LOOP;
     EXCEPTION
