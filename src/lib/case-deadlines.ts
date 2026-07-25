@@ -22,7 +22,12 @@ export interface DashboardOverview {
   teamCount?: number;
 }
 
-export type DeadlineType = "meeting" | "initial_report" | "final_report" | "pre_meeting_milestone";
+export type DeadlineType =
+  | "meeting"
+  | "initial_report"
+  | "final_report"
+  | "judges_meeting"
+  | "pre_meeting_milestone";
 
 export type DeadlineUrgency = "past_due" | "urgent" | "upcoming";
 
@@ -45,13 +50,14 @@ export const DEADLINE_LABELS: Record<DeadlineType, string> = {
   meeting: "موعد الاجتماع",
   initial_report: "التقرير المبدئي",
   final_report: "التقرير النهائي",
+  judges_meeting: "ميعاد الجلسة القادم",
   pre_meeting_milestone: "نواقص ما قبل الاجتماع",
 };
 
 const DEADLINE_FIELDS: {
   field: keyof Case;
   type: DeadlineType;
-  milestoneField: keyof Case;
+  milestoneField?: keyof Case;
 }[] = [
   {
     field: "meeting_date",
@@ -62,6 +68,10 @@ const DEADLINE_FIELDS: {
     field: "initial_report_date",
     type: "initial_report",
     milestoneField: "initial_report_prepared_at",
+  },
+  {
+    field: "judges_meeting_date",
+    type: "judges_meeting",
   },
 ];
 
@@ -110,7 +120,7 @@ export function collectCaseDeadlines(
       if (!date) continue;
 
       // لا نُظهر موعداً إذا أُنجزت المرحلة المقابلة له
-      if (caseItem[milestoneField]) continue;
+      if (milestoneField && caseItem[milestoneField]) continue;
 
       const dateOnly = toDateOnly(date) ?? date;
       const daysUntil = daysBetween(today, dateOnly);
