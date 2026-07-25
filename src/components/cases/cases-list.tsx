@@ -57,8 +57,10 @@ export function CasesList({
   exportExpertName,
 }: CasesListProps) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
-  const [selectedExpertFilter, setSelectedExpertFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] =
+    useState<StatusFilter>(initialStatusFilter);
+  const [selectedExpertFilter, setSelectedExpertFilter] =
+    useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
@@ -85,7 +87,9 @@ export function CasesList({
   const filteredCases = useMemo(() => {
     const query = search.trim().toLowerCase();
     return memberFilteredCases.filter((caseItem) => {
-      const matchesExpert = selectedExpertFilter === "all" || caseItem.expert_id === selectedExpertFilter;
+      const matchesExpert =
+        selectedExpertFilter === "all" ||
+        caseItem.expert_id === selectedExpertFilter;
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "delayed"
@@ -122,7 +126,14 @@ export function CasesList({
       delayed: getCasesWithLateDeadlines(memberFilteredCases).length,
       closed: memberFilteredCases.filter((c) => c.status === "closed").length,
     }),
-    [memberFilteredCases]
+    [memberFilteredCases],
+  );
+
+  const selectedExpert = useMemo(
+    () =>
+      uniqueExperts.find((expert) => expert.id === selectedExpertFilter) ??
+      null,
+    [uniqueExperts, selectedExpertFilter],
   );
 
   if (cases.length === 0) {
@@ -136,9 +147,7 @@ export function CasesList({
           <p className="text-muted-foreground mt-1 max-w-sm text-sm">
             ابدأ بإضافة أول قضية لتتبع الأطراف والمواعيد وفريق العمل
           </p>
-          {isCoordinator && (
-            <NewCaseButton className="mt-6" />
-          )}
+          {isCoordinator && <NewCaseButton className="mt-6" />}
         </CardContent>
       </Card>
     );
@@ -187,12 +196,19 @@ export function CasesList({
               />
             </div>
             {!expertId && uniqueExperts.length > 0 && (
-              <Select value={selectedExpertFilter} onValueChange={(val) => setSelectedExpertFilter(val || "all")}>
+              <Select
+                value={selectedExpertFilter}
+                onValueChange={(val) => setSelectedExpertFilter(val || "all")}
+              >
                 <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="تصفية بالخبير" />
+                  {selectedExpertFilter && selectedExpert ? (
+                    `${selectedExpert.name} `
+                  ) : (
+                    <SelectValue placeholder="اختر الخبير" />
+                  )}
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">الكل (الخبراء)</SelectItem>
+                  <SelectItem value="all">اختر الخبير</SelectItem>
                   {uniqueExperts.map((exp) => (
                     <SelectItem key={exp.id} value={exp.id}>
                       {exp.name}
@@ -205,22 +221,22 @@ export function CasesList({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
             <div className="flex flex-wrap gap-2">
               {statusFilters.map((filter) => (
-              <button
-                key={filter.value}
-                type="button"
-                onClick={() => setStatusFilter(filter.value)}
-                className={cn(
-                  "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
-                  statusFilter === filter.value
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {filter.label}
-                <span className="mr-1.5 opacity-70">
-                  ({counts[filter.value]})
-                </span>
-              </button>
+                <button
+                  key={filter.value}
+                  type="button"
+                  onClick={() => setStatusFilter(filter.value)}
+                  className={cn(
+                    "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+                    statusFilter === filter.value
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {filter.label}
+                  <span className="mr-1.5 opacity-70">
+                    ({counts[filter.value]})
+                  </span>
+                </button>
               ))}
             </div>
             {enableExpertExport && !expertId && filteredCases.length > 0 && (
@@ -264,7 +280,11 @@ export function CasesList({
           </Card>
         ) : (
           paginatedCases.map((caseItem) => (
-            <CaseMobileCard key={caseItem.id} caseItem={caseItem} canEdit={isCoordinator} />
+            <CaseMobileCard
+              key={caseItem.id}
+              caseItem={caseItem}
+              canEdit={isCoordinator}
+            />
           ))
         )}
       </div>
