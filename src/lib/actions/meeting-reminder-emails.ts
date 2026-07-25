@@ -17,7 +17,10 @@ export type MeetingReminderEmailResult = {
 function tomorrowDateString(): string {
   const date = new Date();
   date.setDate(date.getDate() + 1);
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function getAppBaseUrl(): string {
@@ -72,7 +75,7 @@ export async function sendTomorrowMeetingReminderEmails(): Promise<MeetingRemind
       coordinator_id,
       coordinator:profiles!cases_coordinator_id_fkey(id, full_name),
       parties:case_parties(name, party_type)
-    `
+    `,
     )
     .not("meeting_date", "is", null)
     .neq("status", "closed")
@@ -84,7 +87,7 @@ export async function sendTomorrowMeetingReminderEmails(): Promise<MeetingRemind
   }
 
   const rows = ((cases ?? []) as unknown as TomorrowMeetingCase[]).filter(
-    (caseItem) => toDateOnly(caseItem.meeting_date) === meetingDate
+    (caseItem) => toDateOnly(caseItem.meeting_date) === meetingDate,
   );
 
   const appBaseUrl = getAppBaseUrl();
@@ -114,7 +117,7 @@ export async function sendTomorrowMeetingReminderEmails(): Promise<MeetingRemind
     if (authError || !recipientEmail) {
       result.failed++;
       result.errors.push(
-        `تعذّر جلب بريد المنسق للقضية ${caseItem.case_number}`
+        `تعذّر جلب بريد المنسق للقضية ${caseItem.case_number}`,
       );
       continue;
     }
@@ -134,7 +137,7 @@ export async function sendTomorrowMeetingReminderEmails(): Promise<MeetingRemind
     if (!sendResult.success) {
       result.failed++;
       result.errors.push(
-        `فشل إرسال بريد القضية ${caseItem.case_number}: ${sendResult.error}`
+        `فشل إرسال بريد القضية ${caseItem.case_number}: ${sendResult.error}`,
       );
       continue;
     }
@@ -151,7 +154,7 @@ export async function sendTomorrowMeetingReminderEmails(): Promise<MeetingRemind
     if (logError) {
       result.failed++;
       result.errors.push(
-        `تم الإرسال لكن فشل التسجيل للقضية ${caseItem.case_number}: ${logError.message}`
+        `تم الإرسال لكن فشل التسجيل للقضية ${caseItem.case_number}: ${logError.message}`,
       );
       continue;
     }

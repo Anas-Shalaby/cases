@@ -33,7 +33,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { CASE_STATUS_LABELS, CASE_TYPE_LABELS, COURT_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
+import {
+  CASE_STATUS_LABELS,
+  CASE_TYPE_LABELS,
+  COURT_LABELS,
+  USER_ROLE_LABELS,
+} from "@/lib/constants";
 import { toDatetimeLocalValue } from "@/lib/utils";
 import {
   createCaseFormSchema,
@@ -56,7 +61,7 @@ interface CaseFormProps {
   initialData?: CaseWithRelations;
   dateContext?: CaseFormDateContext;
   onSubmit: (
-    values: CaseFormValues
+    values: CaseFormValues,
   ) => Promise<{ error?: unknown; success?: boolean; id?: string } | void>;
   submitLabel?: string;
   formId?: string;
@@ -101,6 +106,7 @@ function caseToFormValues(caseData: CaseWithRelations): CaseFormValues {
     plaintiffs,
     defendants,
     coordinator_id: caseData.coordinator_id ?? "",
+    court: caseData.court ?? null,
     expert_id: caseData.expert_id ?? "",
     assistant_id: caseData.assistant_id ?? "",
   };
@@ -120,424 +126,446 @@ export const CaseForm = forwardRef<CaseFormHandle, CaseFormProps>(
       onPendingChange,
       validateOnChange = true,
     },
-    ref
+    ref,
   ) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [formError, setFormError] = useState<string | null>(null);
+    const router = useRouter();
+    const [isPending, startTransition] = useTransition();
+    const [formError, setFormError] = useState<string | null>(null);
 
-  const schema = useMemo(
-    () => createCaseFormSchema(dateContext),
-    [dateContext]
-  );
+    const schema = useMemo(
+      () => createCaseFormSchema(dateContext),
+      [dateContext],
+    );
 
-  const form = useForm<CaseFormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: initialData ? caseToFormValues(initialData) : defaultValues,
-    mode: validateOnChange ? "onChange" : "onSubmit",
-    reValidateMode: validateOnChange ? "onChange" : "onSubmit",
-  });
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    trigger,
-    getValues,
-    setError,
-    control,
-    formState: { errors, isValid },
-  } = form;
-
-  useImperativeHandle(ref, () => ({
-    triggerValidation: () => trigger(),
-    getValues,
-    setFormError,
-    applyFieldErrors: (fieldErrors) => {
-      for (const [field, messages] of Object.entries(fieldErrors)) {
-        if (field === "_form") {
-          setFormError(messages?.[0] ?? null);
-          continue;
-        }
-        if (messages?.[0]) {
-          setError(field as keyof CaseFormValues, { message: messages[0] });
-        }
-      }
-    },
-  }));
-
-  useEffect(() => {
-    if (dateContext && validateOnChange) {
-      void trigger([
-        "assignment_date",
-        "meeting_date",
-        "initial_report_date",
-        "final_report_date",
-      ]);
-    }
-  }, [dateContext, trigger, validateOnChange]);
-
-  useEffect(() => {
-    if (validateOnChange) {
-      onValidationChange?.(!isValid);
-    }
-  }, [isValid, onValidationChange, validateOnChange]);
-
-  useEffect(() => {
-    onPendingChange?.(isPending);
-  }, [isPending, onPendingChange]);
-
-  const status = watch("status");
-  const caseType = watch("case_type");
-  const coordinatorId = watch("coordinator_id");
-  const expertId = watch("expert_id");
-  const assistantId = watch("assistant_id");
-
-  function handleFormSubmit(values: CaseFormValues) {
-    setFormError(null);
-    startTransition(async () => {
-      const result = await onSubmit(values);
-
-      if (result && "success" in result && result.success) {
-        if ("id" in result && typeof result.id === "string") {
-          router.push(`/cases/${result.id}`);
-        }
-        return;
-      }
-
-      if (result?.error) {
-        const err = result.error as Record<string, string[] | undefined>;
-        const firstError =
-          err._form?.[0] ??
-          err.case_number?.[0] ??
-          err.case_name?.[0] ??
-          err.assignment_date?.[0] ??
-          err.meeting_date?.[0] ??
-          err.initial_report_date?.[0] ??
-          err.final_report_date?.[0] ??
-          err.plaintiffs?.[0] ??
-          err.defendants?.[0] ??
-          err.coordinator_id?.[0] ??
-          err.expert_id?.[0] ??
-          err.assistant_id?.[0] ??
-          Object.values(err)
-            .flat()
-            .find((msg): msg is string => Boolean(msg));
-
-        if (firstError) {
-          setFormError(firstError);
-        }
-      }
+    const form = useForm<CaseFormValues>({
+      resolver: zodResolver(schema),
+      defaultValues: initialData
+        ? caseToFormValues(initialData)
+        : defaultValues,
+      mode: validateOnChange ? "onChange" : "onSubmit",
+      reValidateMode: validateOnChange ? "onChange" : "onSubmit",
     });
-  }
 
-  return (
-    <form
-      id={formId}
-      onSubmit={handleSubmit(handleFormSubmit)}
-      className="space-y-6"
-    >
-      {formError && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {formError}
-        </div>
-      )}
+    const {
+      register,
+      handleSubmit,
+      setValue,
+      watch,
+      trigger,
+      getValues,
+      setError,
+      control,
+      formState: { errors, isValid },
+    } = form;
 
-      <Card>
-        <CardHeader>
-          <CardTitle>بيانات القضية</CardTitle>
-          <CardDescription>رقم القضية، الاسم، والحالة والمواعيد</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="case_number">رقم القضية *</Label>
-            <Input
-              id="case_number"
-              placeholder="مثال: 1234/2026"
-              dir="ltr"
-              className="font-mono font-semibold"
-              {...register("case_number")}
-            />
-            {errors.case_number && (
-              <p className="text-sm text-destructive">
-                {errors.case_number.message}
-              </p>
-            )}
-          </div>
+    useImperativeHandle(ref, () => ({
+      triggerValidation: () => trigger(),
+      getValues,
+      setFormError,
+      applyFieldErrors: (fieldErrors) => {
+        for (const [field, messages] of Object.entries(fieldErrors)) {
+          if (field === "_form") {
+            setFormError(messages?.[0] ?? null);
+            continue;
+          }
+          if (messages?.[0]) {
+            setError(field as keyof CaseFormValues, { message: messages[0] });
+          }
+        }
+      },
+    }));
 
-          <div className="space-y-2">
-            <Label htmlFor="case_name">اسم القضية *</Label>
-            <Input
-              id="case_name"
-              placeholder="مثال: نزاع تجاري — شركة أ vs شركة ب"
-              {...register("case_name")}
-            />
-            {errors.case_name && (
-              <p className="text-sm text-destructive">
-                {errors.case_name.message}
-              </p>
-            )}
-          </div>
+    useEffect(() => {
+      if (dateContext && validateOnChange) {
+        void trigger([
+          "assignment_date",
+          "meeting_date",
+          "initial_report_date",
+          "final_report_date",
+        ]);
+      }
+    }, [dateContext, trigger, validateOnChange]);
 
-          <div className="space-y-2">
-            <Label htmlFor="court">المحكمة التابعة لها</Label>
-            <Select
-              value={form.watch("court") ?? ""}
-              onValueChange={(val: any) =>
-                form.setValue("court", val || null, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                })
-              }
-            >
-              <SelectTrigger id="court" className="bg-background">
-                <SelectValue placeholder="اختر المحكمة (اختياري)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">بدون محكمة محددة</SelectItem>
-                {Object.entries(COURT_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.court && (
-              <p className="text-sm text-destructive">{errors.court.message}</p>
-            )}
-          </div>
+    useEffect(() => {
+      if (validateOnChange) {
+        onValidationChange?.(!isValid);
+      }
+    }, [isValid, onValidationChange, validateOnChange]);
 
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="notes">ملاحظات القضية</Label>
-            <Textarea
-              id="notes"
-              placeholder="ملاحظات عامة عن القضية..."
-              rows={4}
-              {...register("notes")}
-            />
-            {errors.notes && (
-              <p className="text-sm text-destructive">{errors.notes.message}</p>
-            )}
-          </div>
+    useEffect(() => {
+      onPendingChange?.(isPending);
+    }, [isPending, onPendingChange]);
 
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="status">حالة القضية</Label>
-            <Select
-              value={status}
-              onValueChange={(value) =>
-                setValue("status", (value ?? "open") as CaseFormValues["status"])
-              }
-            >
-              <SelectTrigger id="status" className="w-full">
-                <SelectValue placeholder="اختر الحالة">
-                  {CASE_STATUS_LABELS[status]}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(CASE_STATUS_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.status && (
-              <p className="text-sm text-destructive">{errors.status.message}</p>
-            )}
-          </div>
+    const status = watch("status");
+    const caseType = watch("case_type");
+    const coordinatorId = watch("coordinator_id");
+    const expertId = watch("expert_id");
+    const assistantId = watch("assistant_id");
 
-          <div className="space-y-2">
-            <Label htmlFor="case_type">نوع القضية</Label>
-            <Select
-              value={caseType}
-              onValueChange={(value) =>
-                setValue("case_type", (value ?? "individual") as CaseFormValues["case_type"])
-              }
-            >
-              <SelectTrigger id="case_type" className="w-full">
-                <SelectValue placeholder="اختر النوع">
-                  {CASE_TYPE_LABELS[caseType]}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(CASE_TYPE_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.case_type && (
-              <p className="text-sm text-destructive">{errors.case_type.message}</p>
-            )}
-          </div>
+    function handleFormSubmit(values: CaseFormValues) {
+      setFormError(null);
+      startTransition(async () => {
+        const result = await onSubmit(values);
 
-          <div className="space-y-2">
-            <Label htmlFor="assignment_date">تاريخ التكليف</Label>
-            <Input id="assignment_date" type="date" {...register("assignment_date")} />
-            {errors.assignment_date && (
-              <p className="text-sm text-destructive">
-                {errors.assignment_date.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="meeting_date">موعد الاجتماع</Label>
-            <Input
-              id="meeting_date"
-              type="datetime-local"
-              {...register("meeting_date")}
-            />
-            {errors.meeting_date && (
-              <p className="text-sm text-destructive">
-                {errors.meeting_date.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="initial_report_date">تاريخ التقرير الأولي</Label>
-            <Input
-              id="initial_report_date"
-              type="date"
-              {...register("initial_report_date")}
-            />
-            {errors.initial_report_date && (
-              <p className="text-sm text-destructive">
-                {errors.initial_report_date.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="final_report_date">تاريخ التقرير النهائي</Label>
-            <Input
-              id="final_report_date"
-              type="date"
-              {...register("final_report_date")}
-            />
-            {errors.final_report_date && (
-              <p className="text-sm text-destructive">
-                {errors.final_report_date.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="judges_meeting_date">ميعاد الجلسة القادم</Label>
-            <Input
-              id="judges_meeting_date"
-              type="date"
-              {...register("judges_meeting_date")}
-              className="font-mono text-sm"
-              dir="ltr"
-            />
-            {errors.judges_meeting_date && (
-              <p className="text-sm text-destructive">
-                {errors.judges_meeting_date.message}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        if (result && "success" in result && result.success) {
+          if ("id" in result && typeof result.id === "string") {
+            router.push(`/cases/${result.id}`);
+          }
+          return;
+        }
 
-      <PartySection
-        title="بيانات المدعي"
-        description="معلومات الأطراف المدعية — يمكن إضافة أكثر من مدعي"
-        partyLabel="المدعي"
-        agentTitle="بيانات وكيل المدعي"
-        fieldName="plaintiffs"
-        control={control}
-        register={register}
-        errors={errors}
-        disabled={isPending}
-        colorVariant="blue"
-      />
+        if (result?.error) {
+          const err = result.error as Record<string, string[] | undefined>;
+          const firstError =
+            err._form?.[0] ??
+            err.case_number?.[0] ??
+            err.case_name?.[0] ??
+            err.assignment_date?.[0] ??
+            err.meeting_date?.[0] ??
+            err.initial_report_date?.[0] ??
+            err.final_report_date?.[0] ??
+            err.plaintiffs?.[0] ??
+            err.defendants?.[0] ??
+            err.coordinator_id?.[0] ??
+            err.expert_id?.[0] ??
+            err.assistant_id?.[0] ??
+            Object.values(err)
+              .flat()
+              .find((msg): msg is string => Boolean(msg));
 
-      <PartySection
-        title="بيانات المدعي عليه"
-        description="معلومات الأطراف المدعى عليها — يمكن إضافة أكثر من مدعي عليه"
-        partyLabel="المدعي عليه"
-        agentTitle="بيانات وكيل المدعي عليه"
-        fieldName="defendants"
-        control={control}
-        register={register}
-        errors={errors}
-        disabled={isPending}
-        colorVariant="amber"
-      />
+          if (firstError) {
+            setFormError(firstError);
+          }
+        }
+      });
+    }
 
-      <Card>
-        <CardHeader>
-          <CardTitle>فريق العمل</CardTitle>
-          <CardDescription>تعيين المنسق والخبير والمساعد</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-2">
-            <Label>المنسق ({USER_ROLE_LABELS.coordinator})</Label>
-            <ProfileSelect
-              profiles={profiles}
-              role="coordinator"
-              value={coordinatorId ?? ""}
-              onValueChange={(value) => setValue("coordinator_id", value)}
-              placeholder="اختر المنسق"
-              disabled={isPending}
-            />
-            {errors.coordinator_id && (
-              <p className="text-sm text-destructive">
-                {errors.coordinator_id.message}
-              </p>
-            )}
+    return (
+      <form
+        id={formId}
+        onSubmit={handleSubmit(handleFormSubmit)}
+        className="space-y-6"
+      >
+        {formError && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {formError}
           </div>
-          <div className="space-y-2">
-            <Label>الخبير ({USER_ROLE_LABELS.expert})</Label>
-            <ProfileSelect
-              profiles={profiles}
-              role="expert"
-              value={expertId ?? ""}
-              onValueChange={(value) => setValue("expert_id", value)}
-              placeholder="اختر الخبير"
-              disabled={isPending}
-            />
-            {errors.expert_id && (
-              <p className="text-sm text-destructive">
-                {errors.expert_id.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label>المساعد ({USER_ROLE_LABELS.assistant})</Label>
-            <ProfileSelect
-              profiles={profiles}
-              role="assistant"
-              value={assistantId ?? ""}
-              onValueChange={(value) => setValue("assistant_id", value)}
-              placeholder="اختر المساعد"
-              disabled={isPending}
-            />
-            {errors.assistant_id && (
-              <p className="text-sm text-destructive">
-                {errors.assistant_id.message}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        )}
 
-      {!hideSubmit && (
-        <>
-          <Separator />
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-start">
-            <Button
-              type="submit"
-              loading={isPending}
-              disabled={validateOnChange && !isValid}
-              className="w-full sm:w-auto"
-            >
-              {submitLabel}
-            </Button>
-          </div>
-        </>
-      )}
-    </form>
-  );
-  }
+        <Card>
+          <CardHeader>
+            <CardTitle>بيانات القضية</CardTitle>
+            <CardDescription>
+              رقم القضية، الاسم، والحالة والمواعيد
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="case_number">رقم القضية *</Label>
+              <Input
+                id="case_number"
+                placeholder="مثال: 1234/2026"
+                dir="ltr"
+                className="font-mono font-semibold"
+                {...register("case_number")}
+              />
+              {errors.case_number && (
+                <p className="text-sm text-destructive">
+                  {errors.case_number.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="case_name">اسم القضية *</Label>
+              <Input
+                id="case_name"
+                placeholder="مثال: نزاع تجاري — شركة أ vs شركة ب"
+                {...register("case_name")}
+              />
+              {errors.case_name && (
+                <p className="text-sm text-destructive">
+                  {errors.case_name.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="court">المحكمة التابعة لها</Label>
+              <Select
+                value={form.watch("court") ?? ""}
+                onValueChange={(val: any) =>
+                  form.setValue("court", val || null, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+              >
+                <SelectTrigger id="court" className="bg-background">
+                  <SelectValue placeholder="اختر المحكمة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">بدون محكمة محددة</SelectItem>
+                  {Object.entries(COURT_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.court && (
+                <p className="text-sm text-destructive">
+                  {errors.court.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="notes">ملاحظات القضية</Label>
+              <Textarea
+                id="notes"
+                placeholder="ملاحظات عامة عن القضية..."
+                rows={4}
+                {...register("notes")}
+              />
+              {errors.notes && (
+                <p className="text-sm text-destructive">
+                  {errors.notes.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="status">حالة القضية</Label>
+              <Select
+                value={status}
+                onValueChange={(value) =>
+                  setValue(
+                    "status",
+                    (value ?? "open") as CaseFormValues["status"],
+                  )
+                }
+              >
+                <SelectTrigger id="status" className="w-full">
+                  <SelectValue placeholder="اختر الحالة">
+                    {CASE_STATUS_LABELS[status]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(CASE_STATUS_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.status && (
+                <p className="text-sm text-destructive">
+                  {errors.status.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="case_type">نوع القضية</Label>
+              <Select
+                value={caseType}
+                onValueChange={(value) =>
+                  setValue(
+                    "case_type",
+                    (value ?? "individual") as CaseFormValues["case_type"],
+                  )
+                }
+              >
+                <SelectTrigger id="case_type" className="w-full">
+                  <SelectValue placeholder="اختر النوع">
+                    {CASE_TYPE_LABELS[caseType]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(CASE_TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.case_type && (
+                <p className="text-sm text-destructive">
+                  {errors.case_type.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assignment_date">تاريخ التكليف</Label>
+              <Input
+                id="assignment_date"
+                type="date"
+                {...register("assignment_date")}
+              />
+              {errors.assignment_date && (
+                <p className="text-sm text-destructive">
+                  {errors.assignment_date.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="meeting_date">موعد الاجتماع</Label>
+              <Input
+                id="meeting_date"
+                type="datetime-local"
+                {...register("meeting_date")}
+              />
+              {errors.meeting_date && (
+                <p className="text-sm text-destructive">
+                  {errors.meeting_date.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="initial_report_date">تاريخ التقرير الأولي</Label>
+              <Input
+                id="initial_report_date"
+                type="date"
+                {...register("initial_report_date")}
+              />
+              {errors.initial_report_date && (
+                <p className="text-sm text-destructive">
+                  {errors.initial_report_date.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="final_report_date">تاريخ التقرير النهائي</Label>
+              <Input
+                id="final_report_date"
+                type="date"
+                {...register("final_report_date")}
+              />
+              {errors.final_report_date && (
+                <p className="text-sm text-destructive">
+                  {errors.final_report_date.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="judges_meeting_date">ميعاد الجلسة القادم</Label>
+              <Input
+                id="judges_meeting_date"
+                type="date"
+                {...register("judges_meeting_date")}
+                className="font-mono text-sm"
+                dir="ltr"
+              />
+              {errors.judges_meeting_date && (
+                <p className="text-sm text-destructive">
+                  {errors.judges_meeting_date.message}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <PartySection
+          title="بيانات المدعي"
+          description="معلومات الأطراف المدعية — يمكن إضافة أكثر من مدعي"
+          partyLabel="المدعي"
+          agentTitle="بيانات وكيل المدعي"
+          fieldName="plaintiffs"
+          control={control}
+          register={register}
+          errors={errors}
+          disabled={isPending}
+          colorVariant="blue"
+        />
+
+        <PartySection
+          title="بيانات المدعي عليه"
+          description="معلومات الأطراف المدعى عليها — يمكن إضافة أكثر من مدعي عليه"
+          partyLabel="المدعي عليه"
+          agentTitle="بيانات وكيل المدعي عليه"
+          fieldName="defendants"
+          control={control}
+          register={register}
+          errors={errors}
+          disabled={isPending}
+          colorVariant="amber"
+        />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>فريق العمل</CardTitle>
+            <CardDescription>تعيين المنسق والخبير والمساعد</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-2">
+              <Label>المنسق ({USER_ROLE_LABELS.coordinator})</Label>
+              <ProfileSelect
+                profiles={profiles}
+                role="coordinator"
+                value={coordinatorId ?? ""}
+                onValueChange={(value) => setValue("coordinator_id", value)}
+                placeholder="اختر المنسق"
+                disabled={isPending}
+              />
+              {errors.coordinator_id && (
+                <p className="text-sm text-destructive">
+                  {errors.coordinator_id.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>الخبير ({USER_ROLE_LABELS.expert})</Label>
+              <ProfileSelect
+                profiles={profiles}
+                role="expert"
+                value={expertId ?? ""}
+                onValueChange={(value) => setValue("expert_id", value)}
+                placeholder="اختر الخبير"
+                disabled={isPending}
+              />
+              {errors.expert_id && (
+                <p className="text-sm text-destructive">
+                  {errors.expert_id.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>المساعد ({USER_ROLE_LABELS.assistant})</Label>
+              <ProfileSelect
+                profiles={profiles}
+                role="assistant"
+                value={assistantId ?? ""}
+                onValueChange={(value) => setValue("assistant_id", value)}
+                placeholder="اختر المساعد"
+                disabled={isPending}
+              />
+              {errors.assistant_id && (
+                <p className="text-sm text-destructive">
+                  {errors.assistant_id.message}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {!hideSubmit && (
+          <>
+            <Separator />
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-start">
+              <Button
+                type="submit"
+                loading={isPending}
+                disabled={validateOnChange && !isValid}
+                className="w-full sm:w-auto"
+              >
+                {submitLabel}
+              </Button>
+            </div>
+          </>
+        )}
+      </form>
+    );
+  },
 );

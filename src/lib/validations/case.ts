@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { validateCaseDates, validateScheduleDates } from "@/lib/case-date-rules";
+import {
+  validateCaseDates,
+  validateScheduleDates,
+} from "@/lib/case-date-rules";
 import { toFormContactList } from "@/lib/case-contacts";
 import { normalizeMeetingDate } from "@/lib/utils";
 import type { CaseMilestoneKey } from "@/lib/case-milestones";
@@ -13,8 +16,9 @@ const optionalEmailEntry = z
   .optional()
   .or(z.literal(""))
   .refine(
-    (value) => !value?.trim() || z.string().email().safeParse(value.trim()).success,
-    { message: "البريد الإلكتروني غير صالح" }
+    (value) =>
+      !value?.trim() || z.string().email().safeParse(value.trim()).success,
+    { message: "البريد الإلكتروني غير صالح" },
   );
 
 const contactListSchema = z.array(z.string());
@@ -30,58 +34,72 @@ export const partyFormSchema = z.object({
 
 export type PartyFormValues = z.infer<typeof partyFormSchema>;
 
-export const caseFormSchema = z.object({
-  case_number: z
-    .string()
-    .min(1, "رقم القضية مطلوب")
-    .max(50, "رقم القضية طويل جداً")
-    .transform((val) => val.trim()),
-  case_name: z
-    .string()
-    .min(2, "اسم القضية مطلوب (حرفان على الأقل)")
-    .max(200, "اسم القضية طويل جداً")
-    .transform((val) => val.trim()),
-  notes: z.string().max(5000, "الملاحظات طويلة جداً").optional().or(z.literal("")),
-  status: z.enum(["open", "delayed", "closed"], {
-    message: "حالة القضية مطلوبة",
-  }),
-  case_type: z.enum(["individual", "committee"]),
-  court: z.enum(["dubai", "abu_dhabi", "federal"]).nullable().optional(),
-  assignment_date: optionalDate,
-  meeting_date: optionalDate,
-  initial_report_date: optionalDate,
-  final_report_date: optionalDate,
-  judges_meeting_date: optionalDate,
-  plaintiffs: z
-    .array(partyFormSchema)
-    .min(1, "يجب إضافة مدعي واحد على الأقل"),
-  defendants: z
-    .array(partyFormSchema)
-    .min(1, "يجب إضافة مدعي عليه واحد على الأقل"),
-  coordinator_id: z.string().uuid("يجب اختيار منسق").optional().or(z.literal("")),
-  expert_id: z.string().uuid().optional().or(z.literal("")),
-  assistant_id: z.string().uuid().optional().or(z.literal("")),
-}).superRefine((data, ctx) => {
-  const scheduleError = validateScheduleDates({
-    assignment_date: data.assignment_date,
-    meeting_date: data.meeting_date,
-    initial_report_date: data.initial_report_date,
-    final_report_date: data.final_report_date,
-  });
-  if (scheduleError) {
-    ctx.addIssue({
-      code: "custom",
-      message: scheduleError.message,
-      path: scheduleError.field ? [scheduleError.field] : ["_form"],
+export const caseFormSchema = z
+  .object({
+    case_number: z
+      .string()
+      .min(1, "رقم القضية مطلوب")
+      .max(50, "رقم القضية طويل جداً")
+      .transform((val) => val.trim()),
+    case_name: z
+      .string()
+      .min(2, "اسم القضية مطلوب (حرفان على الأقل)")
+      .max(200, "اسم القضية طويل جداً")
+      .transform((val) => val.trim()),
+    notes: z
+      .string()
+      .max(5000, "الملاحظات طويلة جداً")
+      .optional()
+      .or(z.literal("")),
+    status: z.enum(["open", "delayed", "closed"], {
+      message: "حالة القضية مطلوبة",
+    }),
+    case_type: z.enum(["individual", "committee"]),
+    court: z.enum(["dubai", "abu_dhabi", "federal"]).nullable(),
+    assignment_date: optionalDate,
+    meeting_date: optionalDate,
+    initial_report_date: optionalDate,
+    final_report_date: optionalDate,
+    judges_meeting_date: optionalDate,
+    plaintiffs: z
+      .array(partyFormSchema)
+      .min(1, "يجب إضافة مدعي واحد على الأقل"),
+    defendants: z
+      .array(partyFormSchema)
+      .min(1, "يجب إضافة مدعي عليه واحد على الأقل"),
+    coordinator_id: z
+      .string()
+      .uuid("يجب اختيار منسق")
+      .optional()
+      .or(z.literal("")),
+    expert_id: z.string().uuid().optional().or(z.literal("")),
+    assistant_id: z.string().uuid().optional().or(z.literal("")),
+  })
+  .superRefine((data, ctx) => {
+    const scheduleError = validateScheduleDates({
+      assignment_date: data.assignment_date,
+      meeting_date: data.meeting_date,
+      initial_report_date: data.initial_report_date,
+      final_report_date: data.final_report_date,
     });
-  }
-});
+    if (scheduleError) {
+      ctx.addIssue({
+        code: "custom",
+        message: scheduleError.message,
+        path: scheduleError.field ? [scheduleError.field] : ["_form"],
+      });
+    }
+  });
 
 export type CaseFormValues = z.infer<typeof caseFormSchema>;
 
 export type CaseFormDateContext = Pick<
   Case,
-  CaseMilestoneKey | "assignment_date" | "meeting_date" | "initial_report_date" | "final_report_date"
+  | CaseMilestoneKey
+  | "assignment_date"
+  | "meeting_date"
+  | "initial_report_date"
+  | "final_report_date"
 >;
 
 export function createCaseFormSchema(context?: CaseFormDateContext) {
@@ -137,7 +155,9 @@ export function partiesToFormValues(parties: CaseParty[] | undefined): {
   plaintiffs: PartyFormValues[];
   defendants: PartyFormValues[];
 } {
-  const sorted = [...(parties ?? [])].sort((a, b) => a.sort_order - b.sort_order);
+  const sorted = [...(parties ?? [])].sort(
+    (a, b) => a.sort_order - b.sort_order,
+  );
 
   const toFormParty = (party: CaseParty): PartyFormValues => ({
     name: party.name,
@@ -156,8 +176,10 @@ export function partiesToFormValues(parties: CaseParty[] | undefined): {
     .map(toFormParty);
 
   return {
-    plaintiffs: plaintiffs.length > 0 ? plaintiffs : [{ ...emptyPartyFormValues }],
-    defendants: defendants.length > 0 ? defendants : [{ ...emptyPartyFormValues }],
+    plaintiffs:
+      plaintiffs.length > 0 ? plaintiffs : [{ ...emptyPartyFormValues }],
+    defendants:
+      defendants.length > 0 ? defendants : [{ ...emptyPartyFormValues }],
   };
 }
 
