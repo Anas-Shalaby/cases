@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireCoordinator } from "@/lib/auth/require-coordinator";
 import { logActivity } from "@/lib/actions/activity-logs";
+import { syncDeadlineNotifications } from "@/lib/actions/notifications";
 import {
   buildMilestoneStateAfterUpdate,
   validateMilestoneDate,
@@ -115,6 +116,8 @@ export async function toggleCaseMilestone(
     });
   }
 
+  await syncDeadlineNotifications().catch(() => {});
+
   revalidatePath("/");
   revalidatePath("/cases");
   revalidatePath(`/cases/${caseId}`);
@@ -180,6 +183,8 @@ export async function updateCaseMilestoneDate(
     .eq("id", caseId);
 
   if (error) return { error: error.message };
+
+  await syncDeadlineNotifications().catch(() => {});
 
   revalidatePath("/");
   revalidatePath("/cases");

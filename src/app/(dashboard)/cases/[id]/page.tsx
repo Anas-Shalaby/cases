@@ -10,6 +10,7 @@ import { ExportCaseButton } from "@/components/cases/export-case-button";
 import { PartiesCard } from "@/components/cases/parties-display";
 import { StatusBadge } from "@/components/cases/status-badge";
 import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
+import { CaseSituationCell } from "@/components/dashboard/case-situation-cell";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { NavButton } from "@/components/ui/nav-button";
 import {
@@ -97,6 +98,20 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
             dir="ltr"
           />
           <DetailInfoRow label="اسم القضية" value={caseData.case_name} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold">موقف القضية</CardTitle>
+          <CardDescription>آخر تحديث لموقف وتطورات القضية</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CaseSituationCell
+            caseId={id}
+            value={caseData.situation}
+            canEdit={isCoordinator}
+          />
         </CardContent>
       </Card>
 
