@@ -140,6 +140,21 @@ export interface ActivityLogWithRelations extends ActivityLog {
   case: Pick<Case, "id" | "case_number" | "case_name"> | null;
 }
 
+export interface ExpertEmailLog {
+  id: string;
+  log_date: string;
+  log_time: string;
+  last_email_subject: string;
+  expert_id: string;
+  action_taken: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExpertEmailLogWithExpert extends ExpertEmailLog {
+  expert: Pick<Profile, "id" | "full_name"> | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -315,6 +330,27 @@ export interface Database {
         Update: {
           description?: string;
           metadata?: Record<string, unknown> | null;
+        };
+        Relationships: [];
+      };
+      expert_email_logs: {
+        Row: ExpertEmailLog;
+        Insert: {
+          id?: string;
+          log_date?: string;
+          log_time?: string;
+          last_email_subject: string;
+          expert_id: string;
+          action_taken?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          log_date?: string;
+          log_time?: string;
+          last_email_subject?: string;
+          expert_id?: string;
+          action_taken?: string;
         };
         Relationships: [];
       };

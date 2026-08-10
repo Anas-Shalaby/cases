@@ -61,5 +61,11 @@ export const NAV_ITEMS = [
     icon: "ClipboardList" as const,
     coordinatorOnly: true,
   },
+  {
+    href: "/expert-emails",
+    label: "سجل الإيميلات",
+    icon: "Mail" as const,
+    coordinatorOnly: true,
+  },
   { href: "/settings", label: "الإعدادات", icon: "Settings" as const },
 ] as const;

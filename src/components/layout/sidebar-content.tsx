@@ -9,6 +9,7 @@ import {
   FileBarChart,
   LayoutDashboard,
   ListChecks,
+  Mail,
   Scale,
   Settings,
   Users,
@@ -32,6 +33,7 @@ const iconMap = {
   FileBarChart,
   Users,
   ClipboardList,
+  Mail,
   Settings,
 } as const;
 
