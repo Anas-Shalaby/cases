@@ -7,6 +7,14 @@ export const CASE_MILESTONES = [
     label: "رفع مذكرة المختصرة لأعمال الخبرة للمحكمة",
   },
   { key: "experts_meeting_at", label: "اجتماع الخبراء" },
+  {
+    key: "documents_submission_deadline_at",
+    label: "مهلة تقديم المستندات",
+  },
+  {
+    key: "documents_received_at",
+    label: "استلام المستندات",
+  },
   { key: "initial_report_prepared_at", label: "إعداد التقرير المبدئي" },
   {
     key: "initial_report_feedback_deadline_at",
@@ -17,14 +25,6 @@ export const CASE_MILESTONES = [
     label: "استلام التعقيب المبدئي",
   },
   { key: "final_report_prepared_at", label: "إعداد التقرير النهائي" },
-  {
-    key: "documents_submission_deadline_at",
-    label: "مهلة تقديم المستندات",
-  },
-  {
-    key: "documents_received_at",
-    label: "استلام المستندات",
-  },
   { key: "case_closed_at", label: "غلق القضية" },
 ] as const;
 
