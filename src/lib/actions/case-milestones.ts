@@ -18,7 +18,7 @@ import { CASE_STATUS_LABELS } from "@/lib/constants";
 import type { Case, CaseStatus } from "@/types/database";
 
 const CASE_DATE_FIELDS =
-  "case_number, case_name, status, assignment_date, meeting_date, initial_report_date, final_report_date, case_received_at, parties_invited_at, experts_meeting_at, documents_submission_deadline_at, initial_report_feedback_deadline_at, initial_report_feedback_received_at, initial_report_prepared_at, final_report_prepared_at, case_closed_at";
+  "case_number, case_name, status, assignment_date, meeting_date, initial_report_date, final_report_date, case_received_at, parties_invited_at, experts_meeting_at, documents_submission_deadline_at, documents_received_at, initial_report_feedback_deadline_at, initial_report_feedback_received_at, initial_report_prepared_at, final_report_prepared_at, case_closed_at";
 
 function todayDateString() {
   return new Date().toISOString().slice(0, 10);

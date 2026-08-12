@@ -282,6 +282,11 @@ export const CaseMilestonesPanel = forwardRef<
               if (deadlineDate < new Date() && !dates["initial_report_feedback_received_at"]) {
                 isBreached = true;
               }
+            } else if (key === "documents_submission_deadline_at" && isDone) {
+              const deadlineDate = new Date(dates[key]!);
+              if (deadlineDate < new Date() && !dates["documents_received_at"]) {
+                isBreached = true;
+              }
             }
 
             // For display purposes, a deadline isn't "completed" in the same way

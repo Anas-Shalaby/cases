@@ -60,21 +60,23 @@ export function validateMilestoneDate(
   const newTime = parseDateOnly(date);
   const label = milestoneLabel(field);
 
-  for (let i = 0; i < fieldIndex; i++) {
-    const prevKey = CASE_MILESTONES[i].key;
-    if (prevKey.endsWith("_deadline_at")) continue;
-    const prevDate = caseData[prevKey];
-    if (prevDate && parseDateOnly(prevDate) > newTime) {
-      return `لا يمكن أن يكون تاريخ «${label}» قبل «${milestoneLabel(prevKey)}»`;
+  if (!field.includes("documents_")) {
+    for (let i = 0; i < fieldIndex; i++) {
+      const prevKey = CASE_MILESTONES[i].key;
+      if (prevKey.endsWith("_deadline_at") || prevKey === "documents_received_at") continue;
+      const prevDate = caseData[prevKey];
+      if (prevDate && parseDateOnly(prevDate) > newTime) {
+        return `لا يمكن أن يكون تاريخ «${label}» قبل «${milestoneLabel(prevKey)}»`;
+      }
     }
-  }
 
-  for (let i = fieldIndex + 1; i < CASE_MILESTONES.length; i++) {
-    const nextKey = CASE_MILESTONES[i].key;
-    if (nextKey.endsWith("_deadline_at")) continue;
-    const nextDate = caseData[nextKey];
-    if (nextDate && parseDateOnly(nextDate) < newTime) {
-      return `لا يمكن أن يكون تاريخ «${label}» بعد «${milestoneLabel(nextKey)}»`;
+    for (let i = fieldIndex + 1; i < CASE_MILESTONES.length; i++) {
+      const nextKey = CASE_MILESTONES[i].key;
+      if (nextKey.endsWith("_deadline_at") || nextKey === "documents_received_at") continue;
+      const nextDate = caseData[nextKey];
+      if (nextDate && parseDateOnly(nextDate) < newTime) {
+        return `لا يمكن أن يكون تاريخ «${label}» بعد «${milestoneLabel(nextKey)}»`;
+      }
     }
   }
 
