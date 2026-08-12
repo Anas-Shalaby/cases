@@ -38,7 +38,8 @@ function PartyBlock({
   partyLabel: string;
   agentTitle: string;
 }) {
-  const partyTitle = getPartyOrdinalLabel(index, total, partyLabel);
+  const effectivePartyLabel = party.custom_label || partyLabel;
+  const partyTitle = getPartyOrdinalLabel(index, total, effectivePartyLabel);
   const agentSectionTitle = getPartyOrdinalLabel(index, total, agentTitle);
 
   return (

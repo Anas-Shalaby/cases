@@ -125,7 +125,30 @@ export function PartySection({
               )}
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold">{partyTitle}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold whitespace-nowrap">{partyTitle}</p>
+                  <Input
+                    list={`roles-${fieldName}`}
+                    placeholder="مسمى مخصص (اختياري)"
+                    className="h-7 w-40 text-xs bg-background"
+                    {...register(`${fieldName}.${index}.custom_label`)}
+                  />
+                  <datalist id={`roles-${fieldName}`}>
+                    {fieldName === "plaintiffs" ? (
+                      <>
+                        <option value="المدعي" />
+                        <option value="المستشكل" />
+                        <option value="المتنازع" />
+                      </>
+                    ) : (
+                      <>
+                        <option value="المدعي عليه" />
+                        <option value="المستشكل ضده" />
+                        <option value="المتنازع ضده" />
+                      </>
+                    )}
+                  </datalist>
+                </div>
                 {fields.length > 1 && (
                   <Button
                     type="button"

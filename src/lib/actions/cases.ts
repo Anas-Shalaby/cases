@@ -170,6 +170,7 @@ function toPartyRows(
     name: party.name.trim(),
     phones: sanitizeContactList(party.phones),
     emails: sanitizeContactList(party.emails),
+    custom_label: party.custom_label?.trim() || null,
     agent_name: party.agent_name?.trim() || null,
     agent_phones: sanitizeContactList(party.agent_phones),
     agent_emails: sanitizeContactList(party.agent_emails),

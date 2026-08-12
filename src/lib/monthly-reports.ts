@@ -58,8 +58,8 @@ export function isCaseRelevantInPeriod(
     caseItem.case_received_at,
     caseItem.parties_invited_at,
     caseItem.experts_meeting_at,
-    caseItem.defendant_documents_received_at,
-    caseItem.plaintiff_documents_received_at,
+    caseItem.documents_submission_deadline_at,
+    caseItem.initial_report_feedback_deadline_at,
     caseItem.initial_report_prepared_at,
     caseItem.final_report_prepared_at,
   ];

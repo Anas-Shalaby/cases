@@ -8,12 +8,12 @@ export const CASE_MILESTONES = [
   },
   { key: "experts_meeting_at", label: "اجتماع الخبراء" },
   {
-    key: "defendant_documents_received_at",
-    label: "استلام مستندات المدعي عليه",
+    key: "documents_submission_deadline_at",
+    label: "مهلة تقديم المستندات",
   },
   {
-    key: "plaintiff_documents_received_at",
-    label: "استلام مستندات المدعي",
+    key: "initial_report_feedback_deadline_at",
+    label: "مهلة التعقيب علي المبدئي",
   },
   { key: "initial_report_prepared_at", label: "إعداد التقرير المبدئي" },
   { key: "final_report_prepared_at", label: "إعداد التقرير النهائي" },

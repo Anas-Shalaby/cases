@@ -54,8 +54,15 @@ interface CaseMilestonesPanelProps {
   onDraftChange?: (dates: Record<CaseMilestoneKey, string | null>) => void;
 }
 
-function todayDateString() {
-  return new Date().toISOString().slice(0, 10);
+function todayDateString(withTime = false) {
+  const d = new Date();
+  if (withTime) {
+    // Ensure we account for local timezone offset when generating datetime-local string
+    const offset = d.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
+    return localISOTime;
+  }
+  return d.toISOString().slice(0, 10);
 }
 
 function buildMilestoneState(caseData: Case): Record<CaseMilestoneKey, string | null> {
@@ -205,7 +212,8 @@ export const CaseMilestonesPanel = forwardRef<
     clearFieldError(key);
     setGeneralError(null);
 
-    const dateToSave = checked ? (dates[key] ?? todayDateString()) : null;
+    const isDateTime = key === "documents_submission_deadline_at" || key === "initial_report_feedback_deadline_at";
+    const dateToSave = checked ? (dates[key] ?? todayDateString(isDateTime)) : null;
 
     if (deferSave) {
       updateDates((prev) => ({ ...prev, [key]: dateToSave }));
@@ -325,14 +333,20 @@ export const CaseMilestonesPanel = forwardRef<
                     )
                   ) : isDone ? (
                     <Input
-                      type="date"
+                      type={
+                        key === "documents_submission_deadline_at" ||
+                        key === "initial_report_feedback_deadline_at"
+                          ? "datetime-local"
+                          : "date"
+                      }
                       value={dates[key] ?? ""}
                       disabled={isPending}
                       onChange={(e) => handleDateChange(key, e.target.value)}
                       onBlur={() => handleDateBlur(key)}
                       aria-invalid={!!fieldError}
                       className={cn(
-                        "h-8 w-full max-w-[160px] text-xs sm:shrink-0",
+                        "h-8 w-full text-xs sm:shrink-0",
+                        (key === "documents_submission_deadline_at" || key === "initial_report_feedback_deadline_at") ? "max-w-[210px]" : "max-w-[160px]",
                         fieldError && "border-destructive"
                       )}
                       dir="ltr"

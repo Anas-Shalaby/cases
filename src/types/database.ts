@@ -40,6 +40,7 @@ export interface CaseParty {
   agent_name: string | null;
   agent_phones: string[];
   agent_emails: string[];
+  custom_label: string | null;
   sort_order: number;
   created_at: string;
 }
@@ -63,8 +64,8 @@ export interface Case {
   experts_notified_at: string | null;
   summary_memo_uploaded_at: string | null;
   experts_meeting_at: string | null;
-  defendant_documents_received_at: string | null;
-  plaintiff_documents_received_at: string | null;
+  documents_submission_deadline_at: string | null;
+  initial_report_feedback_deadline_at: string | null;
   initial_report_prepared_at: string | null;
   final_report_prepared_at: string | null;
   case_closed_at: string | null;
@@ -194,8 +195,8 @@ export interface Database {
           experts_notified_at?: string | null;
           summary_memo_uploaded_at?: string | null;
           experts_meeting_at?: string | null;
-          defendant_documents_received_at?: string | null;
-          plaintiff_documents_received_at?: string | null;
+          documents_submission_deadline_at?: string | null;
+          initial_report_feedback_deadline_at?: string | null;
           initial_report_prepared_at?: string | null;
           final_report_prepared_at?: string | null;
           case_closed_at?: string | null;
@@ -221,8 +222,8 @@ export interface Database {
           experts_notified_at?: string | null;
           summary_memo_uploaded_at?: string | null;
           experts_meeting_at?: string | null;
-          defendant_documents_received_at?: string | null;
-          plaintiff_documents_received_at?: string | null;
+          documents_submission_deadline_at?: string | null;
+          initial_report_feedback_deadline_at?: string | null;
           initial_report_prepared_at?: string | null;
           final_report_prepared_at?: string | null;
           case_closed_at?: string | null;
@@ -244,6 +245,7 @@ export interface Database {
           agent_name?: string | null;
           agent_phones?: string[];
           agent_emails?: string[];
+          custom_label?: string | null;
           sort_order?: number;
           created_at?: string;
         };
@@ -255,6 +257,7 @@ export interface Database {
           agent_name?: string | null;
           agent_phones?: string[];
           agent_emails?: string[];
+          custom_label?: string | null;
           sort_order?: number;
         };
         Relationships: [];
