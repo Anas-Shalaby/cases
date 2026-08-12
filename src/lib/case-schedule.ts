@@ -109,6 +109,8 @@ export function collectScheduleEvents(
     if (!userRole) continue;
 
     for (const milestone of CASE_MILESTONES) {
+      if (milestone.key.endsWith("_deadline_at")) continue;
+
       const value = caseItem[milestone.key];
       if (!value) continue;
 

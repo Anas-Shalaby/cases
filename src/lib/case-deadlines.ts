@@ -27,7 +27,9 @@ export type DeadlineType =
   | "initial_report"
   | "final_report"
   | "judges_meeting"
-  | "pre_meeting_milestone";
+  | "pre_meeting_milestone"
+  | "documents_deadline"
+  | "feedback_deadline";
 
 export type DeadlineUrgency = "past_due" | "urgent" | "upcoming";
 
@@ -52,6 +54,8 @@ export const DEADLINE_LABELS: Record<DeadlineType, string> = {
   final_report: "التقرير النهائي",
   judges_meeting: "ميعاد الجلسة القادم",
   pre_meeting_milestone: "نواقص ما قبل الاجتماع",
+  documents_deadline: "مهلة استلام المستندات",
+  feedback_deadline: "مهلة استلام التعقيب",
 };
 
 const DEADLINE_FIELDS: {
@@ -72,6 +76,16 @@ const DEADLINE_FIELDS: {
   {
     field: "judges_meeting_date",
     type: "judges_meeting",
+  },
+  {
+    field: "documents_submission_deadline_at",
+    type: "documents_deadline",
+    milestoneField: "documents_received_at",
+  },
+  {
+    field: "initial_report_feedback_deadline_at",
+    type: "feedback_deadline",
+    milestoneField: "initial_report_feedback_received_at",
   },
 ];
 
