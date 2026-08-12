@@ -274,19 +274,37 @@ export const CaseMilestonesPanel = forwardRef<
             const isLoading = isPending && pendingKey === key;
             const fieldError = fieldErrors[key];
 
+            const isDeadline = key === "documents_submission_deadline_at" || key === "initial_report_feedback_deadline_at";
+            
+            let isBreached = false;
+            if (key === "initial_report_feedback_deadline_at" && isDone) {
+              const deadlineDate = new Date(dates[key]!);
+              if (deadlineDate < new Date() && !dates["initial_report_feedback_received_at"]) {
+                isBreached = true;
+              }
+            }
+
+            // For display purposes, a deadline isn't "completed" in the same way
+            const isCompletedMilestone = isDone && !isDeadline;
+
             return (
               <li
                 key={key}
                 className={cn(
                   "flex items-start gap-3 px-4 py-3 transition-colors sm:items-center sm:gap-4",
-                  isDone && "bg-emerald-50/50 dark:bg-emerald-950/20",
+                  isCompletedMilestone && "bg-emerald-50/50 dark:bg-emerald-950/20",
+                  isBreached && "bg-destructive/10 dark:bg-destructive/20 border-l-4 border-l-destructive",
                   isLoading && "opacity-60",
                   fieldError && "bg-destructive/5"
                 )}
               >
                 {readOnly ? (
                   isDone ? (
-                    <CheckCircle2 className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    isCompletedMilestone ? (
+                      <CheckCircle2 className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    ) : (
+                      <Circle className="size-5 shrink-0 text-muted-foreground" />
+                    )
                   ) : (
                     <Circle className="text-muted-foreground size-5 shrink-0" />
                   )
@@ -311,7 +329,8 @@ export const CaseMilestonesPanel = forwardRef<
                     <span
                       className={cn(
                         "text-sm font-medium leading-snug",
-                        isDone && "text-emerald-800 dark:text-emerald-300"
+                        isCompletedMilestone && "text-emerald-800 dark:text-emerald-300",
+                        isBreached && "text-destructive"
                       )}
                     >
                       {label}
@@ -323,12 +342,12 @@ export const CaseMilestonesPanel = forwardRef<
 
                   {readOnly ? (
                     isDone ? (
-                      <span className="text-muted-foreground shrink-0 text-xs">
+                      <span className={cn("shrink-0 text-xs", isBreached ? "text-destructive font-medium" : "text-muted-foreground")}>
                         {dates[key]}
                       </span>
                     ) : (
                       <span className="text-muted-foreground text-xs sm:shrink-0">
-                        لم تُنجَز بعد
+                        {isDeadline ? "لم يُحدد بعد" : "لم تُنجَز بعد"}
                       </span>
                     )
                   ) : isDone ? (
@@ -353,7 +372,7 @@ export const CaseMilestonesPanel = forwardRef<
                     />
                   ) : (
                     <span className="text-muted-foreground text-xs sm:shrink-0">
-                      لم تُنجَز بعد
+                      {isDeadline ? "لم يُحدد بعد" : "لم تُنجَز بعد"}
                     </span>
                   )}
                 </div>

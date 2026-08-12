@@ -66,6 +66,7 @@ export interface Case {
   experts_meeting_at: string | null;
   documents_submission_deadline_at: string | null;
   initial_report_feedback_deadline_at: string | null;
+  initial_report_feedback_received_at: string | null;
   initial_report_prepared_at: string | null;
   final_report_prepared_at: string | null;
   case_closed_at: string | null;
@@ -197,6 +198,7 @@ export interface Database {
           experts_meeting_at?: string | null;
           documents_submission_deadline_at?: string | null;
           initial_report_feedback_deadline_at?: string | null;
+          initial_report_feedback_received_at?: string | null;
           initial_report_prepared_at?: string | null;
           final_report_prepared_at?: string | null;
           case_closed_at?: string | null;
@@ -224,6 +226,7 @@ export interface Database {
           experts_meeting_at?: string | null;
           documents_submission_deadline_at?: string | null;
           initial_report_feedback_deadline_at?: string | null;
+          initial_report_feedback_received_at?: string | null;
           initial_report_prepared_at?: string | null;
           final_report_prepared_at?: string | null;
           case_closed_at?: string | null;
