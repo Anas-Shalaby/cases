@@ -48,11 +48,23 @@ export function ExpertEmailLogsTable({
   experts,
 }: ExpertEmailLogsTableProps) {
   const [expertFilter, setExpertFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
 
   const filtered = useMemo(() => {
-    if (expertFilter === "all") return logs;
-    return logs.filter((log) => log.expert_id === expertFilter);
-  }, [logs, expertFilter]);
+    let result = logs;
+    if (expertFilter !== "all") {
+      result = result.filter((log) => log.expert_id === expertFilter);
+    }
+    if (dateFilter !== "all") {
+      result = result.filter((log) => log.log_date === dateFilter);
+    }
+    return result;
+  }, [logs, expertFilter, dateFilter]);
+
+  const uniqueDates = useMemo(() => {
+    const dates = Array.from(new Set(logs.map((log) => log.log_date)));
+    return dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  }, [logs]);
 
   const expertCounts = useMemo(() => {
     const counts: Record<string, number> = { all: logs.length };
@@ -94,13 +106,31 @@ export function ExpertEmailLogsTable({
               {logs.length}
             </span>
           </p>
-          {expertFilter !== "all" && (
+          {(expertFilter !== "all" || dateFilter !== "all") && (
             <Badge variant="outline" className="text-xs">
-              {filtered.length} سجل للخبير المحدد
+              {filtered.length} سجل بعد التصفية
             </Badge>
           )}
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Select
+            value={dateFilter}
+            onValueChange={(v) => setDateFilter(v ?? "all")}
+          >
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="تصفية حسب اليوم">
+                {dateFilter === "all" ? "جميع الأيام" : formatDate(dateFilter)}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع الأيام</SelectItem>
+              {uniqueDates.map((date) => (
+                <SelectItem key={date} value={date}>
+                  {formatDate(date)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select
             value={expertFilter}
             onValueChange={(v) => setExpertFilter(v ?? "all")}

@@ -26,7 +26,7 @@ import { getCaseActivityLogs } from "@/lib/actions/activity-logs";
 import { getCaseDocuments } from "@/lib/actions/case-documents";
 import { getCaseTasks } from "@/lib/actions/case-tasks";
 import { getCurrentProfile } from "@/lib/actions/profile";
-import { formatCasePartiesSummary } from "@/lib/case-parties";
+import { formatCasePartiesSummary, getPartiesByType } from "@/lib/case-parties";
 import { CASE_TYPE_LABELS, COURT_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/utils";
 
@@ -47,6 +47,12 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   if (!caseData) notFound();
 
   const isCoordinator = profile?.role === "coordinator";
+
+  const plaintiffs = getPartiesByType(caseData.parties, "plaintiff");
+  const plaintiffLabel = plaintiffs[0]?.custom_label || "المدعي";
+
+  const defendants = getPartiesByType(caseData.parties, "defendant");
+  const defendantLabel = defendants[0]?.custom_label || "المدعي عليه";
 
   return (
     <div className="space-y-6">
@@ -198,30 +204,30 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
 
         <Card className="border-blue-200 bg-blue-50/20 dark:border-blue-900 dark:bg-blue-950/10">
           <CardHeader>
-            <CardTitle className="text-blue-900 dark:text-blue-200">بيانات المدعي</CardTitle>
+            <CardTitle className="text-blue-900 dark:text-blue-200">بيانات {plaintiffLabel}</CardTitle>
           </CardHeader>
           <CardContent>
             <PartiesCard
               parties={caseData.parties}
-              title="بيانات المدعي"
+              title={`بيانات ${plaintiffLabel}`}
               partyType="plaintiff"
-              partyLabel="المدعي"
-              agentTitle="بيانات وكيل المدعي"
+              partyLabel={plaintiffLabel}
+              agentTitle={`بيانات وكيل ${plaintiffLabel}`}
             />
           </CardContent>
         </Card>
 
         <Card className="border-amber-200 bg-amber-50/20 dark:border-amber-900 dark:bg-amber-950/10">
           <CardHeader>
-            <CardTitle className="text-amber-900 dark:text-amber-200">بيانات المدعي عليه</CardTitle>
+            <CardTitle className="text-amber-900 dark:text-amber-200">بيانات {defendantLabel}</CardTitle>
           </CardHeader>
           <CardContent>
             <PartiesCard
               parties={caseData.parties}
-              title="بيانات المدعي عليه"
+              title={`بيانات ${defendantLabel}`}
               partyType="defendant"
-              partyLabel="المدعي عليه"
-              agentTitle="بيانات وكيل المدعي عليه"
+              partyLabel={defendantLabel}
+              agentTitle={`بيانات وكيل ${defendantLabel}`}
             />
           </CardContent>
         </Card>
