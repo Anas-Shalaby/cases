@@ -119,14 +119,21 @@ export function CasesList({
     setCurrentPage(1);
   }, [search, statusFilter]);
 
+  const casesForCounts = useMemo(() => {
+    if (selectedExpertFilter === "all") return memberFilteredCases;
+    return memberFilteredCases.filter(
+      (c) => c.expert_id === selectedExpertFilter
+    );
+  }, [memberFilteredCases, selectedExpertFilter]);
+
   const counts = useMemo(
     () => ({
-      all: memberFilteredCases.length,
-      open: memberFilteredCases.filter((c) => c.status === "open").length,
-      delayed: getCasesWithLateDeadlines(memberFilteredCases).length,
-      closed: memberFilteredCases.filter((c) => c.status === "closed").length,
+      all: casesForCounts.length,
+      open: casesForCounts.filter((c) => c.status === "open").length,
+      delayed: getCasesWithLateDeadlines(casesForCounts).length,
+      closed: casesForCounts.filter((c) => c.status === "closed").length,
     }),
-    [memberFilteredCases],
+    [casesForCounts],
   );
 
   const selectedExpert = useMemo(
@@ -255,7 +262,7 @@ export function CasesList({
           <CardTitle className="flex items-center justify-between text-base">
             <span>قائمة القضايا</span>
             <span className="text-muted-foreground text-sm font-normal">
-              {filteredCases.length} من {memberFilteredCases.length} قضية
+              {filteredCases.length} من {casesForCounts.length} قضية
             </span>
           </CardTitle>
         </CardHeader>
