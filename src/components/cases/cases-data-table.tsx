@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { InlineSituationEditor } from "@/components/cases/inline-situation-editor";
 import { COURT_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { formatContactList, sanitizeContactList } from "@/lib/case-contacts";
 import { getPartiesByType } from "@/lib/case-parties";
@@ -33,6 +34,7 @@ interface CasesDataTableProps {
   className?: string;
   emptyMessage?: string;
   canEdit?: boolean;
+  onSituationUpdated?: (caseId: string, newSituation: string | null) => void;
 }
 
 function CellText({
@@ -46,10 +48,7 @@ function CellText({
 }) {
   const display = value?.trim() || "—";
   return (
-    <span
-      className={cn("text-sm", muted && "text-muted-foreground")}
-      dir={dir}
-    >
+    <span className={cn("text-sm", muted && "text-muted-foreground")} dir={dir}>
       {display}
     </span>
   );
@@ -70,7 +69,7 @@ function PartiesCell({
   const contactParty = items.find(
     (party) =>
       sanitizeContactList(party.phones).length > 0 ||
-      sanitizeContactList(party.emails).length > 0
+      sanitizeContactList(party.emails).length > 0,
   );
   const contactText = contactParty
     ? [
@@ -106,8 +105,19 @@ function PartiesCell({
   const typeLabel = partyType === "plaintiff" ? "المدعي" : "المدعي عليه";
   const getIndexLabel = (index: number) => {
     if (items.length === 1) return typeLabel;
-    const ordinals = ["الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن", "التاسع", "العاشر"];
-    return `${typeLabel} ${ordinals[index] ?? (index + 1)}`;
+    const ordinals = [
+      "الأول",
+      "الثاني",
+      "الثالث",
+      "الرابع",
+      "الخامس",
+      "السادس",
+      "السابع",
+      "الثامن",
+      "التاسع",
+      "العاشر",
+    ];
+    return `${typeLabel} ${ordinals[index] ?? index + 1}`;
   };
 
   return (
@@ -118,17 +128,22 @@ function PartiesCell({
             key={party.id || index}
             className={cn(
               "rounded-md border px-2 py-1 text-xs font-medium leading-snug w-fit max-w-full break-words",
-              getPartyColor(partyType, index)
+              getPartyColor(partyType, index),
             )}
             title={getIndexLabel(index)}
           >
-            <span className="opacity-70 text-[10px] ml-1.5">{getIndexLabel(index)}:</span>
+            <span className="opacity-70 text-[10px] ml-1.5">
+              {getIndexLabel(index)}:
+            </span>
             {party.name}
           </div>
         ))}
       </div>
       {contactText && (
-        <p className="text-muted-foreground text-xs leading-snug mt-1" dir="ltr">
+        <p
+          className="text-muted-foreground text-xs leading-snug mt-1"
+          dir="ltr"
+        >
           {contactText}
         </p>
       )}
@@ -141,6 +156,7 @@ export function CasesDataTable({
   className,
   emptyMessage = "لا توجد قضايا لعرضها",
   canEdit = false,
+  onSituationUpdated,
 }: CasesDataTableProps) {
   const router = useRouter();
   const [isNavigating, startNavigation] = useTransition();
@@ -162,24 +178,29 @@ export function CasesDataTable({
   }
 
   return (
-    <Table className={cn("min-w-full lg:min-w-[1000px] xl:min-w-[1200px] w-full table-fixed", className)}>
+    <Table
+      className={cn(
+        "min-w-full lg:min-w-[1000px] xl:min-w-[1200px] w-full table-fixed",
+        className,
+      )}
+    >
       <TableHeader>
         <TableRow className="bg-muted/50 hover:bg-muted/50">
           <TableHead className="sticky right-0 z-10 w-[130px] bg-muted/80 backdrop-blur-sm">
             رقم القضية
           </TableHead>
-          <TableHead className="w-[180px] lg:w-[220px]">اسم القضية</TableHead>
-          <TableHead className="w-[140px] lg:table-cell">{USER_ROLE_LABELS.expert}</TableHead>
+          <TableHead className="w-[140px] lg:table-cell">
+            {USER_ROLE_LABELS.expert}
+          </TableHead>
           <TableHead className="w-[180px]">موقف القضية</TableHead>
           <TableHead className="w-[110px]">الحالة</TableHead>
-          <TableHead className="w-[130px] hidden xl:table-cell">تاريخ التكليف</TableHead>
-          <TableHead className="w-[130px]">تاريخ الحكم</TableHead>
-          <TableHead className="w-[130px] hidden 2xl:table-cell">التقرير الأولي</TableHead>
-          <TableHead className="w-[130px] hidden 2xl:table-cell">التقرير النهائي</TableHead>
-          <TableHead className="w-[140px] hidden 2xl:table-cell">{USER_ROLE_LABELS.coordinator}</TableHead>
-          <TableHead className="w-[140px] hidden xl:table-cell">{USER_ROLE_LABELS.assistant}</TableHead>
-          <TableHead className="sticky left-0 z-10 w-[80px] bg-muted/80 backdrop-blur-sm">
-            إجراءات
+          <TableHead className="w-[130px] hidden xl:table-cell">
+            تاريخ التكليف
+          </TableHead>
+          <TableHead className="w-[130px]">تاريخ الجلسة القادمة</TableHead>
+
+          <TableHead className="w-[140px] hidden 2xl:table-cell">
+            {USER_ROLE_LABELS.coordinator}
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -189,7 +210,7 @@ export function CasesDataTable({
             key={caseItem.id}
             className={cn(
               "group",
-              isNavigating && navigatingCaseId === caseItem.id && "opacity-70"
+              isNavigating && navigatingCaseId === caseItem.id && "opacity-70",
             )}
           >
             <TableCell className="sticky right-0 z-10 bg-card group-hover:bg-muted/50 align-top">
@@ -198,16 +219,6 @@ export function CasesDataTable({
                 className="font-mono text-xs font-bold text-primary hover:underline"
                 dir="ltr"
               >
-                {caseItem.case_number}
-              </Link>
-            </TableCell>
-
-            <TableCell className="align-top">
-              <Link
-                href={`/cases/${caseItem.id}`}
-                className="line-clamp-2 font-medium leading-snug hover:text-primary hover:underline"
-              >
-                {caseItem.case_name}
                 {caseItem.case_type === "committee" && (
                   <span className="mr-1 inline-block rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                     لجنة
@@ -218,6 +229,7 @@ export function CasesDataTable({
                     {COURT_LABELS[caseItem.court]}
                   </span>
                 )}
+                {caseItem.case_number}
               </Link>
             </TableCell>
 
@@ -231,7 +243,12 @@ export function CasesDataTable({
             </TableCell>
 
             <TableCell className="align-top">
-              <span className="line-clamp-2 text-sm text-muted-foreground whitespace-pre-wrap">{caseItem.situation || "—"}</span>
+              <InlineSituationEditor
+                caseId={caseItem.id}
+                initialValue={caseItem.situation}
+                canEdit={canEdit}
+                onUpdated={(val) => onSituationUpdated?.(caseItem.id, val)}
+              />
             </TableCell>
 
             <TableCell className="align-top">
@@ -243,68 +260,14 @@ export function CasesDataTable({
             </TableCell>
 
             <TableCell className="align-top">
-              <CellText value={formatDate(caseItem.judges_meeting_date)} muted />
-            </TableCell>
-
-            <TableCell className="align-top hidden 2xl:table-cell">
               <CellText
-                value={formatDate(caseItem.initial_report_date)}
+                value={formatDate(caseItem.judges_meeting_date)}
                 muted
               />
-            </TableCell>
-
-            <TableCell className="align-top hidden 2xl:table-cell">
-              <CellText value={formatDate(caseItem.final_report_date)} muted />
             </TableCell>
 
             <TableCell className="align-top hidden 2xl:table-cell">
               <CellText value={caseItem.coordinator?.full_name} muted />
-            </TableCell>
-
-            <TableCell className="align-top hidden xl:table-cell">
-              <TeamMemberCasesLink
-                memberId={caseItem.assistant_id}
-                memberName={caseItem.assistant?.full_name}
-                role="assistant"
-                muted
-              />
-            </TableCell>
-
-            <TableCell className="sticky left-0 z-10 bg-card align-top group-hover:bg-muted/50">
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      className="cursor-pointer"
-                      variant="ghost"
-                      size="icon-sm"
-                      loading={isNavigating && navigatingCaseId === caseItem.id}
-                      disabled={isNavigating}
-                    >
-                      <MoreHorizontal className="size-4" />
-                      <span className="sr-only">فتح القائمة</span>
-                    </Button>
-                  }
-                />
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem
-                    onClick={() => navigateTo(`/cases/${caseItem.id}`, caseItem.id)}
-                  >
-                    <Eye className="size-4" />
-                    عرض التفاصيل
-                  </DropdownMenuItem>
-                  {canEdit && (
-                    <DropdownMenuItem
-                      onClick={() =>
-                        navigateTo(`/cases/${caseItem.id}/edit`, caseItem.id)
-                      }
-                    >
-                      <Pencil className="size-4" />
-                      تعديل القضية
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
             </TableCell>
           </TableRow>
         ))}

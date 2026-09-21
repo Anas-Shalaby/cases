@@ -68,37 +68,45 @@ export function CasesList({
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
+  // local copy for optimistic inline edits (avoids full page reload lag)
+  const [localCases, setLocalCases] = useState(cases);
+  useEffect(() => {
+    setLocalCases(cases);
+  }, [cases]);
+
   const uniqueExperts = useMemo(() => {
     const map = new Map<string, { id: string; name: string }>();
-    cases.forEach((c) => {
+    localCases.forEach((c) => {
       if (c.expert_id && c.expert) {
         map.set(c.expert_id, { id: c.expert_id, name: c.expert.full_name });
       }
     });
     return Array.from(map.values());
-  }, [cases]);
+  }, [localCases]);
 
   const memberFilteredCases = useMemo(() => {
     if (expertId) {
-      return cases.filter((c) => c.expert_id === expertId);
+      return localCases.filter((c) => c.expert_id === expertId);
     }
     if (assistantId) {
-      return cases.filter((c) => c.assistant_id === assistantId);
+      return localCases.filter((c) => c.assistant_id === assistantId);
     }
-    return cases;
-  }, [cases, expertId, assistantId]);
+    return localCases;
+  }, [localCases, expertId, assistantId]);
 
-  const filteredCases = useMemo(() => {
+  function handleSituationUpdated(caseId: string, newSituation: string | null) {
+    setLocalCases((prev) =>
+      prev.map((c) => (c.id === caseId ? { ...c, situation: newSituation } : c))
+    );
+  }
+
+  // base filter: all filters EXCEPT status (so status counts stay in sync with judgment/search/expert)
+  const baseFilteredCases = useMemo(() => {
     const query = search.trim().toLowerCase();
     return memberFilteredCases.filter((caseItem) => {
       const matchesExpert =
         selectedExpertFilter === "all" ||
         caseItem.expert_id === selectedExpertFilter;
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "delayed"
-          ? isCaseLate(caseItem)
-          : caseItem.status === statusFilter);
       const matchesSearch =
         !query ||
         caseItem.case_number?.toLowerCase().includes(query) ||
@@ -108,29 +116,33 @@ export function CasesList({
         caseItem.expert?.full_name?.toLowerCase().includes(query) ||
         caseItem.assistant?.full_name?.toLowerCase().includes(query);
 
-      // judgment date interval filter (judges_meeting_date)
       const matchesJudgmentDate = (() => {
         if (!judgmentFrom && !judgmentTo) return true;
         const raw = caseItem.judges_meeting_date;
         if (!raw) return false;
-        const dateOnly = raw.slice(0, 10); // YYYY-MM-DD
+        const dateOnly = raw.slice(0, 10);
         if (judgmentFrom && dateOnly < judgmentFrom) return false;
         if (judgmentTo && dateOnly > judgmentTo) return false;
         return true;
       })();
 
-      return (
-        matchesStatus && matchesSearch && matchesExpert && matchesJudgmentDate
-      );
+      return matchesSearch && matchesExpert && matchesJudgmentDate;
     });
   }, [
     memberFilteredCases,
     search,
-    statusFilter,
     selectedExpertFilter,
     judgmentFrom,
     judgmentTo,
   ]);
+
+  const filteredCases = useMemo(() => {
+    return baseFilteredCases.filter((caseItem) => {
+      if (statusFilter === "all") return true;
+      if (statusFilter === "delayed") return isCaseLate(caseItem);
+      return caseItem.status === statusFilter;
+    });
+  }, [baseFilteredCases, statusFilter]);
 
   const paginatedCases = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -144,21 +156,14 @@ export function CasesList({
     setCurrentPage(1);
   }, [search, statusFilter, selectedExpertFilter, judgmentFrom, judgmentTo]);
 
-  const casesForCounts = useMemo(() => {
-    if (selectedExpertFilter === "all") return memberFilteredCases;
-    return memberFilteredCases.filter(
-      (c) => c.expert_id === selectedExpertFilter
-    );
-  }, [memberFilteredCases, selectedExpertFilter]);
-
   const counts = useMemo(
     () => ({
-      all: casesForCounts.length,
-      open: casesForCounts.filter((c) => c.status === "open").length,
-      delayed: getCasesWithLateDeadlines(casesForCounts).length,
-      closed: casesForCounts.filter((c) => c.status === "closed").length,
+      all: baseFilteredCases.length,
+      open: baseFilteredCases.filter((c) => c.status === "open").length,
+      delayed: getCasesWithLateDeadlines(baseFilteredCases).length,
+      closed: baseFilteredCases.filter((c) => c.status === "closed").length,
     }),
-    [casesForCounts],
+    [baseFilteredCases],
   );
 
   const selectedExpert = useMemo(
@@ -285,7 +290,7 @@ export function CasesList({
           <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3 sm:flex-row sm:items-end sm:gap-4">
             <div className="flex items-center gap-2 text-sm font-medium">
               <CalendarRange className="size-4 text-muted-foreground" />
-              <span>تصفية بتاريخ الحكم</span>
+              <span>تصفية بتاريخ الجلسة</span>
               <span className="text-muted-foreground text-xs font-normal">
                 (ميعاد الجلسة القادم)
               </span>
@@ -340,7 +345,7 @@ export function CasesList({
           <CardTitle className="flex items-center justify-between text-base">
             <span>قائمة القضايا</span>
             <span className="text-muted-foreground text-sm font-normal">
-              {filteredCases.length} من {casesForCounts.length} قضية
+              {filteredCases.length} من {baseFilteredCases.length} قضية
             </span>
           </CardTitle>
         </CardHeader>
@@ -349,6 +354,7 @@ export function CasesList({
             cases={paginatedCases}
             emptyMessage="لا توجد نتائج مطابقة للبحث"
             canEdit={isCoordinator}
+            onSituationUpdated={handleSituationUpdated}
           />
         </CardContent>
       </Card>
@@ -369,6 +375,7 @@ export function CasesList({
               key={caseItem.id}
               caseItem={caseItem}
               canEdit={isCoordinator}
+              onSituationUpdated={handleSituationUpdated}
             />
           ))
         )}

@@ -2,6 +2,7 @@
 
 import { Eye, Pencil } from "lucide-react";
 
+import { InlineSituationEditor } from "@/components/cases/inline-situation-editor";
 import { StatusBadge } from "@/components/cases/status-badge";
 import { TeamMemberCasesLink } from "@/components/cases/team-member-cases-link";
 import { NavButton } from "@/components/ui/nav-button";
@@ -15,22 +16,21 @@ interface CaseMobileCardProps {
   caseItem: CaseWithRelations;
   compact?: boolean;
   canEdit?: boolean;
+  onSituationUpdated?: (caseId: string, newSituation: string | null) => void;
 }
 
 export function CaseMobileCard({
   caseItem,
   compact = false,
   canEdit = false,
+  onSituationUpdated,
 }: CaseMobileCardProps) {
   return (
     <Card className="overflow-hidden">
       <CardContent className="space-y-4 pt-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <p
-              className="font-mono text-sm font-bold text-primary"
-              dir="ltr"
-            >
+            <p className="font-mono text-sm font-bold text-primary" dir="ltr">
               {caseItem.case_number}
             </p>
             <p className="line-clamp-2 font-medium leading-snug">
@@ -59,7 +59,9 @@ export function CaseMobileCard({
           {!compact && (
             <>
               <div>
-                <p className="text-muted-foreground mb-0.5 text-xs">تاريخ الحكم</p>
+                <p className="text-muted-foreground mb-0.5 text-xs">
+                  تاريخ الجلسة
+                </p>
                 <p>{formatDate(caseItem.judges_meeting_date)}</p>
               </div>
               <div>
@@ -71,6 +73,19 @@ export function CaseMobileCard({
             </>
           )}
         </div>
+
+        {!compact && (
+          <div className="space-y-1 rounded-lg border bg-muted/20 p-2">
+            <p className="text-muted-foreground text-xs font-medium">موقف القضية</p>
+            <InlineSituationEditor
+              caseId={caseItem.id}
+              initialValue={caseItem.situation}
+              canEdit={canEdit}
+              compact
+              onUpdated={(val) => onSituationUpdated?.(caseItem.id, val)}
+            />
+          </div>
+        )}
 
         {!compact && (
           <div className="text-muted-foreground grid grid-cols-1 gap-2 border-t pt-3 text-xs sm:grid-cols-3">
