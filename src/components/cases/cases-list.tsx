@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Briefcase, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Briefcase, CalendarRange, Search, X } from "lucide-react";
 
 import { CaseMobileCard } from "@/components/cases/case-mobile-card";
 import { CasesDataTable } from "@/components/cases/cases-data-table";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { NavButton } from "@/components/ui/nav-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -61,6 +62,9 @@ export function CasesList({
     useState<StatusFilter>(initialStatusFilter);
   const [selectedExpertFilter, setSelectedExpertFilter] =
     useState<string>("all");
+  // judgment date interval filter (maps to judges_meeting_date in DB)
+  const [judgmentFrom, setJudgmentFrom] = useState("");
+  const [judgmentTo, setJudgmentTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
@@ -103,9 +107,30 @@ export function CasesList({
         caseItem.coordinator?.full_name?.toLowerCase().includes(query) ||
         caseItem.expert?.full_name?.toLowerCase().includes(query) ||
         caseItem.assistant?.full_name?.toLowerCase().includes(query);
-      return matchesStatus && matchesSearch && matchesExpert;
+
+      // judgment date interval filter (judges_meeting_date)
+      const matchesJudgmentDate = (() => {
+        if (!judgmentFrom && !judgmentTo) return true;
+        const raw = caseItem.judges_meeting_date;
+        if (!raw) return false;
+        const dateOnly = raw.slice(0, 10); // YYYY-MM-DD
+        if (judgmentFrom && dateOnly < judgmentFrom) return false;
+        if (judgmentTo && dateOnly > judgmentTo) return false;
+        return true;
+      })();
+
+      return (
+        matchesStatus && matchesSearch && matchesExpert && matchesJudgmentDate
+      );
     });
-  }, [memberFilteredCases, search, statusFilter, selectedExpertFilter]);
+  }, [
+    memberFilteredCases,
+    search,
+    statusFilter,
+    selectedExpertFilter,
+    judgmentFrom,
+    judgmentTo,
+  ]);
 
   const paginatedCases = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -115,9 +140,9 @@ export function CasesList({
   const totalPages = Math.ceil(filteredCases.length / ITEMS_PER_PAGE);
 
   // Reset page when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter]);
+  }, [search, statusFilter, selectedExpertFilter, judgmentFrom, judgmentTo]);
 
   const casesForCounts = useMemo(() => {
     if (selectedExpertFilter === "all") return memberFilteredCases;
@@ -191,67 +216,120 @@ export function CasesList({
       )}
 
       <Card>
-        <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex w-full flex-col gap-3 sm:max-w-md sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
-              <Input
-                placeholder="بحث برقم القضية، الاسم، الأطراف..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pr-9"
-              />
-            </div>
-            {!expertId && uniqueExperts.length > 0 && (
-              <Select
-                value={selectedExpertFilter}
-                onValueChange={(val) => setSelectedExpertFilter(val || "all")}
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  {selectedExpertFilter && selectedExpert ? (
-                    `${selectedExpert.name} `
-                  ) : (
-                    <SelectValue placeholder="اختر الخبير" />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">اختر الخبير</SelectItem>
-                  {uniqueExperts.map((exp) => (
-                    <SelectItem key={exp.id} value={exp.id}>
-                      {exp.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
-            <div className="flex flex-wrap gap-2">
-              {statusFilters.map((filter) => (
-                <button
-                  key={filter.value}
-                  type="button"
-                  onClick={() => setStatusFilter(filter.value)}
-                  className={cn(
-                    "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
-                    statusFilter === filter.value
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
+        <CardContent className="flex flex-col gap-4 pt-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex w-full flex-col gap-3 sm:max-w-md sm:flex-row">
+              <div className="relative flex-1">
+                <Search className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+                <Input
+                  placeholder="بحث برقم القضية، الاسم، الأطراف..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pr-9"
+                />
+              </div>
+              {!expertId && uniqueExperts.length > 0 && (
+                <Select
+                  value={selectedExpertFilter}
+                  onValueChange={(val) => setSelectedExpertFilter(val || "all")}
                 >
-                  {filter.label}
-                  <span className="mr-1.5 opacity-70">
-                    ({counts[filter.value]})
-                  </span>
-                </button>
-              ))}
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    {selectedExpertFilter && selectedExpert ? (
+                      `${selectedExpert.name} `
+                    ) : (
+                      <SelectValue placeholder="اختر الخبير" />
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">اختر الخبير</SelectItem>
+                    {uniqueExperts.map((exp) => (
+                      <SelectItem key={exp.id} value={exp.id}>
+                        {exp.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-            {enableExpertExport && !expertId && filteredCases.length > 0 && (
-              <ExportCasesButtons
-                cases={filteredCases}
-                expertName={exportExpertName}
-              />
-            )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+              <div className="flex flex-wrap gap-2">
+                {statusFilters.map((filter) => (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() => setStatusFilter(filter.value)}
+                    className={cn(
+                      "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+                      statusFilter === filter.value
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    {filter.label}
+                    <span className="mr-1.5 opacity-70">
+                      ({counts[filter.value]})
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {enableExpertExport && !expertId && filteredCases.length > 0 && (
+                <ExportCasesButtons
+                  cases={filteredCases}
+                  expertName={exportExpertName}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Judgment date interval filter (from / to) */}
+          <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3 sm:flex-row sm:items-end sm:gap-4">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <CalendarRange className="size-4 text-muted-foreground" />
+              <span>تصفية بتاريخ الحكم</span>
+              <span className="text-muted-foreground text-xs font-normal">
+                (ميعاد الجلسة القادم)
+              </span>
+            </div>
+            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="judgment-from" className="text-xs">
+                  من تاريخ
+                </Label>
+                <Input
+                  id="judgment-from"
+                  type="date"
+                  value={judgmentFrom}
+                  onChange={(e) => setJudgmentFrom(e.target.value)}
+                  className="w-full sm:w-[170px]"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="judgment-to" className="text-xs">
+                  إلى تاريخ
+                </Label>
+                <Input
+                  id="judgment-to"
+                  type="date"
+                  value={judgmentTo}
+                  onChange={(e) => setJudgmentTo(e.target.value)}
+                  className="w-full sm:w-[170px]"
+                />
+              </div>
+              {(judgmentFrom || judgmentTo) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setJudgmentFrom("");
+                    setJudgmentTo("");
+                  }}
+                  className="w-fit"
+                >
+                  <X className="size-4" />
+                  مسح التصفية
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

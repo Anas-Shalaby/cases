@@ -23,10 +23,7 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
       ? (status as CaseStatus)
       : "all";
 
-  const [cases, profile] = await Promise.all([
-    getCases(),
-    getCurrentProfile(),
-  ]);
+  const [cases, profile] = await Promise.all([getCases(), getCurrentProfile()]);
   const isCoordinator = profile?.role === "coordinator";
   const isExpert = profile?.role === "expert";
 
@@ -39,8 +36,7 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
     expertId = expert;
     memberFilterRole = "expert";
     memberFilterName =
-      cases.find((c) => c.expert_id === expert)?.expert?.full_name ??
-      undefined;
+      cases.find((c) => c.expert_id === expert)?.expert?.full_name ?? undefined;
   } else if (assistant && UUID_RE.test(assistant)) {
     assistantId = assistant;
     memberFilterRole = "assistant";

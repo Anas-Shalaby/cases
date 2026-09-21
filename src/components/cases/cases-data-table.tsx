@@ -25,7 +25,7 @@ import {
 import { COURT_LABELS, USER_ROLE_LABELS } from "@/lib/constants";
 import { formatContactList, sanitizeContactList } from "@/lib/case-contacts";
 import { getPartiesByType } from "@/lib/case-parties";
-import { cn, formatDate, formatDateTime } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import type { CasePartyType, CaseWithRelations } from "@/types/database";
 
 interface CasesDataTableProps {
@@ -173,7 +173,7 @@ export function CasesDataTable({
           <TableHead className="w-[180px]">موقف القضية</TableHead>
           <TableHead className="w-[110px]">الحالة</TableHead>
           <TableHead className="w-[130px] hidden xl:table-cell">تاريخ التكليف</TableHead>
-          <TableHead className="w-[130px]">تاريخ الاجتماع</TableHead>
+          <TableHead className="w-[130px]">تاريخ الحكم</TableHead>
           <TableHead className="w-[130px] hidden 2xl:table-cell">التقرير الأولي</TableHead>
           <TableHead className="w-[130px] hidden 2xl:table-cell">التقرير النهائي</TableHead>
           <TableHead className="w-[140px] hidden 2xl:table-cell">{USER_ROLE_LABELS.coordinator}</TableHead>
@@ -243,7 +243,7 @@ export function CasesDataTable({
             </TableCell>
 
             <TableCell className="align-top">
-              <CellText value={formatDateTime(caseItem.meeting_date)} muted />
+              <CellText value={formatDate(caseItem.judges_meeting_date)} muted />
             </TableCell>
 
             <TableCell className="align-top hidden 2xl:table-cell">
